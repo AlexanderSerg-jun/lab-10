@@ -1,29 +1,17 @@
-variable "yc_token" {
+variable "proxmox_api_url" {
+  type = string
+}
+
+variable "proxmox_api_token_id" {
   type = string
   sensitive = true
 }
 
-variable "cloud_id" {
+variable "proxmox_api_token_secret" {
   type = string
-}
-
-#variable "folder_id" {
-#  type = string
-#}
-
-variable "zone" {
-  type    = string
-  default = "ru-central1-b"
+  sensitive = true
 }
 
 variable "domain_name" {
   type = string
 }
-
-variable "domain_org" {
-  type = string
-}
-
-#variable "domain_token" {
-#  type = string
-#}

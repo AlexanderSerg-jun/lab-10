@@ -1,5 +1,5 @@
 locals {
-  vm_user         = "cloud-user"
+  vm_user         = "almalinux"
   ssh_public_key  = "~/.ssh/id_rsa.pub"
   ssh_private_key = "~/.ssh/id_rsa"
   #vm_name         = "instance"
@@ -7,26 +7,12 @@ locals {
 
   folders = {
     "lab-folder" = {}
-    #"loadbalancer-folder" = {}
-    #"nginx_folder" = {}
-    #"backend_folder" = {}
   }
 
   subnets = {
     "lab-subnet" = {
       v4_cidr_blocks = ["10.10.10.0/24"]
     }
-    /*
-    "loadbalancer-subnet" = {
-      v4_cidr_blocks = ["10.10.10.0/24"]
-    }
-    "nginx-subnet" = {
-      v4_cidr_blocks = ["10.10.20.0/24"]
-    }
-    "backend-subnet" = {
-      v4_cidr_blocks = ["10.10.30.0/24"]
-    }
-    */
   }
 
   #subnet_cidrs  = ["10.10.50.0/24"]
@@ -45,36 +31,10 @@ locals {
   */
 }
 /*
-resource "yandex_resourcemanager_folder" "folders" {
-  for_each = local.folders
-  name     = each.key
-  cloud_id = var.cloud_id
-}
-*/
-#data "yandex_resourcemanager_folder" "folders" {
-#  for_each   = yandex_resourcemanager_folder.folders
-#  name       = each.value["name"]
-#  depends_on = [yandex_resourcemanager_folder.folders]
-#}
-
 resource "yandex_vpc_network" "vpc" {
   folder_id = yandex_resourcemanager_folder.folders["lab-folder"].id
   name      = local.vpc_name
 }
-
-data "yandex_vpc_network" "vpc" {
-  folder_id = yandex_resourcemanager_folder.folders["lab-folder"].id
-  name      = yandex_vpc_network.vpc.name
-}
-
-#resource "yandex_vpc_subnet" "subnet" {
-#  count          = length(local.subnet_cidrs)
-#  folder_id      = yandex_resourcemanager_folder.folders["lab-folder"].id
-#  v4_cidr_blocks = local.subnet_cidrs
-#  zone           = var.zone
-#  name           = "${local.subnet_name}${format("%1d", count.index + 1)}"
-#  network_id     = yandex_vpc_network.vpc.id
-#}
 
 resource "yandex_vpc_subnet" "subnets" {
   for_each = local.subnets
@@ -85,32 +45,48 @@ resource "yandex_vpc_subnet" "subnets" {
   network_id     = data.yandex_vpc_network.vpc.id
   route_table_id = yandex_vpc_route_table.rt.id
 }
+*/
+resource "proxmox_vm_qemu" "srv_demo_1" {
+  name = "srv-demo-1"
+  desc = "Ubuntu Server"
+  vmid = "401"
+  target_node = "proxmox"
 
-#data "yandex_vpc_subnet" "subnets" {
-#  for_each   = yandex_vpc_subnet.subnets
-#  name       = each.value["name"]
-#  folder_id      = yandex_resourcemanager_folder.folders["lab-folder"].id
-#  depends_on = [yandex_vpc_subnet.subnets]
-#}
+  agent = 1
 
-resource "yandex_vpc_gateway" "nat_gateway" {
-  name = "test-gateway"
-  folder_id = yandex_resourcemanager_folder.folders["lab-folder"].id
-  shared_egress_gateway {}
-}
+  clone = "ubuntu-server-focal"
+  cores = 2
+  sockets = 1
+  cpu = "host"
+  memory = 2048
 
-resource "yandex_vpc_route_table" "rt" {
-  name       = "test-route-table"
-  folder_id  = yandex_resourcemanager_folder.folders["lab-folder"].id
-  network_id = yandex_vpc_network.vpc.id
-
-  static_route {
-    destination_prefix = "0.0.0.0/0"
-    gateway_id         = yandex_vpc_gateway.nat_gateway.id
-    #next_hop_address   = yandex_compute_instance.nat-instance.network_interface.0.ip_address
-    #next_hop_address = data.yandex_lb_network_load_balancer.keepalived.internal_address_spec.0.address
+  network {
+    bridge = "vmbr0"
+    model = "virtio"
   }
+
+  disk {
+    storage = "local-lvm"
+    type = "virtio"
+    size = "20G"
+  }
+
+  os_type = "cloud-init"
+  ipconfig0 = "ip=10.10.10.11/24,gw=10.10.10.1"
+  nameserver = "10.10.10.1"
+  ciuser = "almalinux"
+  sshkeys = <<EOF
+  ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCgaU3Ra1Wi5CNimg/P3tYlCPosUzAZw6D5t3yo7ZF0ZqHYHWMmvmtgHSl+NL04VCY444Yyysuy+F0797DxJCv2RhE1aEoukPYKvr/T9eMVwlb0m+Euqqux/XVSt+s0iL8ylK+5bozzEESoOgRhIToEGtp72GDBCnN2i0f2QFwwJIdf6d6L2AsO0FrxmpcSofdiG4e/C9wNlSBEEdtS+0munB+FNhezsHn0jXcihrULA2jozUg1YzjujIMQyZ6wyk6KokasbiL2rPUcVMC7/oHpoQo/qpewn6cN1xqyQVokbyqiE6X8jxYkM8gykPaR6lvZKKAwJf4gNOxa+U/TLSB2Pgfo+tkqFse0L0drJUCTzwc+0WfMDXKde0OSnO4+pnKx9YUvz/9GzhaFTKgudfRDyj0TlgjgFowVngfriL63NoXQLIJloh9uj3htTCg68ywKhJ5eL/6pSn9DwvbIZCM0nRIhoxNdsqkYjddTe05p95aZwc0Y7TI7/0SBsq1nzpE= user@redos
+  EOF
 }
+
+
+
+
+
+
+
+/*
 
 module "jump-servers" {
   source         = "./modules/instances"
@@ -302,7 +278,7 @@ resource "yandex_compute_disk" "disks" {
   size      = "1"
   zone      = var.zone
 }
-
+*/
 #data "yandex_compute_disk" "disks" {
 #  for_each   = yandex_compute_disk.disks
 #  name       = each.value["name"]

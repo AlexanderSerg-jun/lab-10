@@ -1,9 +1,5 @@
 
-cloud_id       = "b1gk2uh1jv4i27fikj4f"
-#folder_id      = "b1g5h8d28qvg63eps3ms" #otus-lab
-#folder_test_id = "b1g69dmheko09a0asuq1" #test
-zone           = "ru-central1-b"
-
-#yc_token     = 
-domain_name  = "example.com"
-domain_org   = "5793503" # id организации в яндекс 360
+domain_name              = "example.com"
+proxmox_api_url          = "https://192.168.117.177:8006/api2/json"
+proxmox_api_token_id     = "user@pve!terraform"                   # full-tokenid - полученный при создании токена
+proxmox_api_token_secret = "26f46a1c-9b1f-40c1-9575-dffa02c8381e" # value        - полученный при создании токена

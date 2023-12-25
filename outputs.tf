@@ -1,3 +1,4 @@
+/*
 output "jump-servers-info" {
   description = "General information about created VMs"
   value = {
@@ -52,3 +53,4 @@ output "nginx-servers-info" {
     }
   }
 }
+*/

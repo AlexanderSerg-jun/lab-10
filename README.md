@@ -164,3 +164,57 @@ nginx-servers-info = {
 Значение IP адреса сайта можно получить от одного из балансировщиков, например, nginx-01:
 
 <img src="pics/screen-003.png" alt="screen-003.png" />
+
+
+Добавим пользователя 'user':
+
+```
+root@pve:~# pveum user add user@pve
+root@pve:~#
+```
+
+Сгенерируем токен для пользователя 'user':
+```
+root@pve:~# pveum user token add user@pve terraform
+┌──────────────┬──────────────────────────────────────┐
+│ key          │ value                                │
+╞══════════════╪══════════════════════════════════════╡
+│ full-tokenid │ user@pve!terraform                   │
+├──────────────┼──────────────────────────────────────┤
+│ info         │ {"privsep":1}                        │
+├──────────────┼──────────────────────────────────────┤
+│ value        │ 26f46a1c-9b1f-40c1-9575-dffa02c8381e │
+└──────────────┴──────────────────────────────────────┘
+root@pve:~#
+```
+
+Создадим роль 'TerraformProv':
+```
+pveum role add TerraformProv -privs "\
+Datastore.AllocateSpace \
+Datastore.Audit \
+Pool.Allocate \
+Sys.Audit \
+Sys.Console \
+Sys.Modify \
+VM.Allocate \
+VM.Audit \
+VM.Clone \
+VM.Config.CDROM \
+VM.Config.Cloudinit \
+VM.Config.CPU \
+VM.Config.Disk \
+VM.Config.HWType \
+VM.Config.Memory \
+VM.Config.Network \
+VM.Config.Options \
+VM.Migrate \
+VM.Monitor \
+VM.PowerMgmt \
+"
+```
+
+Добавим роль 'TerraformProv' пользователю 'user': 
+```
+pveum aclmod / -user user@pve -role TerraformProv
+```
