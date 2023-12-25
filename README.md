@@ -214,7 +214,7 @@ VM.PowerMgmt \
 "
 ```
 
-Добавим роль 'TerraformProv' пользователю 'user': 
+Добавим роль 'TerraformProv' только что созданному пользователю 'user': 
 ```
 pveum aclmod / -user user@pve -role TerraformProv
 ```
