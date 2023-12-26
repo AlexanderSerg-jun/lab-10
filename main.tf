@@ -182,26 +182,27 @@ resource "proxmox_vm_qemu" "ressource_testvm" {
     desc        = "VM test Server"
     name        = "test"
     target_node = "pve" #Internal name of your proxmox server
-    #cores       = 2
-    #sockets     = 2
-    #onboot      = true
-    #numa        = true
-    #hotplug     = "network,disk,usb"
+    cores       = 2
+    sockets     = 2
+    onboot      = true
+    numa        = true
+    hotplug     = "network,disk,usb"
     #iso         = "/tmp/debian-12.4.0-amd64-netinst.iso"  #replace vms2 with real datastore name
-    iso         = "./debian.iso"  #replace vms2 with real datastore name
-    #memory      = 2048
-    #balloon     = 2048
-    #scsihw      = "virtio-scsi-pci"
-    #bootdisk    = "scsi0"
-  /*
+    iso         = "local:iso/debian-12.4.0-amd64-netinst.iso"  #replace vms2 with real datastore name
+    memory      = 2048
+    balloon     = 2048
+    scsihw      = "virtio-scsi-pci"
+    bootdisk    = "scsi0"
+    agent       = 1
+  
     disk {
       size        = "10G"
-      storage     = "vms"
+      storage     = "local-lvm"
       type        = "scsi"
     }
-  
+  /*
     network {
-      bridge    = "vmbr1"
+      bridge    = "vmbr0"
       model     = "virtio"
     }
   */
