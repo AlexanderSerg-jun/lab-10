@@ -166,29 +166,16 @@ nginx-servers-info = {
 <img src="pics/screen-003.png" alt="screen-003.png" />
 
 
-Добавим пользователя 'user':
 
-```
-root@pve:~# pveum user add user@pve
-root@pve:~#
-```
 
-Сгенерируем токен для пользователя 'user':
+
+
+Скачаем iso-образ:
 ```
-root@pve:~# pveum user token add user@pve terraform
-┌──────────────┬──────────────────────────────────────┐
-│ key          │ value                                │
-╞══════════════╪══════════════════════════════════════╡
-│ full-tokenid │ user@pve!terraform                   │
-├──────────────┼──────────────────────────────────────┤
-│ info         │ {"privsep":1}                        │
-├──────────────┼──────────────────────────────────────┤
-│ value        │ 26f46a1c-9b1f-40c1-9575-dffa02c8381e │
-└──────────────┴──────────────────────────────────────┘
-root@pve:~#
+root@pve:~# wget https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-12.4.0-amd64-netinst.iso
 ```
 
-Создадим роль 'TerraformProv':
+Создадим новую роль 'TerraformProv':
 ```
 pveum role add TerraformProv -privs "\
 Datastore.AllocateSpace \
@@ -214,7 +201,32 @@ VM.PowerMgmt \
 "
 ```
 
+Создадим нового пользователя 'user':
+
+```
+root@pve:~# pveum user add user@pve
+root@pve:~#
+```
+
+Сгенерируем токен для пользователя 'user':
+```
+root@pve:~# pveum user token add user@pve terraform --privsep false
+┌──────────────┬──────────────────────────────────────┐
+│ key          │ value                                │
+╞══════════════╪══════════════════════════════════════╡
+│ full-tokenid │ user@pve!terraform                   │
+├──────────────┼──────────────────────────────────────┤
+│ info         │ {"privsep":1}                        │
+├──────────────┼──────────────────────────────────────┤
+│ value        │ 26f46a1c-9b1f-40c1-9575-dffa02c8381e │
+└──────────────┴──────────────────────────────────────┘
+root@pve:~#
+```
+
 Добавим роль 'TerraformProv' только что созданному пользователю 'user': 
 ```
 pveum aclmod / -user user@pve -role TerraformProv
+
+root@pve:~# pveum acl modify / --user user@pve --roles TerraformProv
+root@pve:~#
 ```

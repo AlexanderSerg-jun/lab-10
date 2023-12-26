@@ -46,15 +46,17 @@ resource "yandex_vpc_subnet" "subnets" {
   route_table_id = yandex_vpc_route_table.rt.id
 }
 */
+/*
 resource "proxmox_vm_qemu" "srv_demo_1" {
   name = "srv-demo-1"
-  desc = "Ubuntu Server"
-  vmid = "401"
-  target_node = "proxmox"
+  #desc = "Ubuntu Server"
+  #vmid = "401"
+  target_node = "pve"
+  iso = "/root/debian-12.4.0-amd64-netinst.iso"
 
   agent = 1
 
-  clone = "ubuntu-server-focal"
+  #clone = "debian-server-focal"
   cores = 2
   sockets = 1
   cpu = "host"
@@ -70,15 +72,147 @@ resource "proxmox_vm_qemu" "srv_demo_1" {
     type = "virtio"
     size = "20G"
   }
+  os_type = "debian"
 
-  os_type = "cloud-init"
   ipconfig0 = "ip=10.10.10.11/24,gw=10.10.10.1"
   nameserver = "10.10.10.1"
-  ciuser = "almalinux"
+  ciuser = "debian"
   sshkeys = <<EOF
   ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCgaU3Ra1Wi5CNimg/P3tYlCPosUzAZw6D5t3yo7ZF0ZqHYHWMmvmtgHSl+NL04VCY444Yyysuy+F0797DxJCv2RhE1aEoukPYKvr/T9eMVwlb0m+Euqqux/XVSt+s0iL8ylK+5bozzEESoOgRhIToEGtp72GDBCnN2i0f2QFwwJIdf6d6L2AsO0FrxmpcSofdiG4e/C9wNlSBEEdtS+0munB+FNhezsHn0jXcihrULA2jozUg1YzjujIMQyZ6wyk6KokasbiL2rPUcVMC7/oHpoQo/qpewn6cN1xqyQVokbyqiE6X8jxYkM8gykPaR6lvZKKAwJf4gNOxa+U/TLSB2Pgfo+tkqFse0L0drJUCTzwc+0WfMDXKde0OSnO4+pnKx9YUvz/9GzhaFTKgudfRDyj0TlgjgFowVngfriL63NoXQLIJloh9uj3htTCg68ywKhJ5eL/6pSn9DwvbIZCM0nRIhoxNdsqkYjddTe05p95aZwc0Y7TI7/0SBsq1nzpE= user@redos
   EOF
+
 }
+*/
+/*
+resource "proxmox_vm_qemu" "preprovision-test" {
+  #preprovision      = true
+  os_type           = "ubuntu"
+  agent             = 0
+  boot              = "order=net0;scsi0"
+  pxe               = true
+  target_node       = "pve"
+  ssh_forward_ip    = "10.0.0.1"
+  ssh_user          = "terraform"
+  ssh_private_key   = <<EOF
+-----BEGIN RSA PRIVATE KEY-----
+private ssh key terraform
+-----END RSA PRIVATE KEY-----
+EOF
+  os_network_config = <<EOF
+auto eth0
+iface eth0 inet dhcp
+EOF
+
+  connection {
+    type        = "ssh"
+    user        = "${self.ssh_user}"
+    private_key = "${self.ssh_private_key}"
+    host        = "${self.ssh_host}"
+    port        = "${self.ssh_port}"
+  }
+}
+*/
+/*
+resource "proxmox_vm_qemu" "pxe-minimal-example" {
+    name                      = "pxe-minimal-example"
+    agent                     = 0
+    boot                      = "order=net0;scsi0"
+    pxe                       = true
+    target_node               = "test"
+    network {
+        bridge    = "vmbr0"
+        firewall  = false
+        link_down = false
+        model     = "e1000"
+    }
+}
+*/
+/*
+resource "proxmox_vm_qemu" "test_server" {
+  count = 1 # just want 1 for now, set to 0 and apply to destroy VM
+  name = "test-vm-${count.index + 1}" #count.index starts at 0, so + 1 means this VM will be named test-vm-1 in proxmox
+  # this now reaches out to the vars file. I could've also used this var above in the pm_api_url setting but wanted to spell it out up there. target_node is different than api_url. target_node is which node hosts the template and thus also which node will host the new VM. it can be different than the host you use to communicate with the API. the variable contains the contents "prox-1u"
+  target_node = var.proxmox_host
+  # another variable with contents "ubuntu-2004-cloudinit-template"
+  clone = var.template_name
+  # basic VM settings here. agent refers to guest agent
+  agent = 1
+  os_type = "cloud-init"
+  cores = 2
+  sockets = 1
+  cpu = "host"
+  memory = 2048
+  scsihw = "virtio-scsi-pci"
+  bootdisk = "scsi0"
+  disk {
+    slot = 0
+    # set disk size here. leave it small for testing because expanding the disk takes time.
+    size = "10G"
+    type = "scsi"
+    storage = "local-zfs"
+    iothread = 1
+  }
+  
+  # if you want two NICs, just copy this whole network section and duplicate it
+  network {
+    model = "virtio"
+    bridge = "vmbr0"
+  }
+  # not sure exactly what this is for. presumably something about MAC addresses and ignore network changes during the life of the VM
+  lifecycle {
+    ignore_changes = [
+      network,
+    ]
+  }
+  
+  # the ${count.index + 1} thing appends text to the end of the ip address
+  # in this case, since we are only adding a single VM, the IP will
+  # be 10.98.1.91 since count.index starts at 0. this is how you can create
+  # multiple VMs and have an IP assigned to each (.91, .92, .93, etc.)
+  ipconfig0 = "ip=10.98.1.9${count.index + 1}/24,gw=10.98.1.1"
+  
+  # sshkeys set using variables. the variable contains the text of the key.
+  sshkeys = <<EOF
+  ${var.ssh_key}
+  EOF
+}
+*/
+
+resource "proxmox_vm_qemu" "ressource_testvm" {
+    desc        = "VM test Server"
+    name        = "test"
+    target_node = "pve" #Internal name of your proxmox server
+    #cores       = 2
+    #sockets     = 2
+    #onboot      = true
+    #numa        = true
+    #hotplug     = "network,disk,usb"
+    #iso         = "/tmp/debian-12.4.0-amd64-netinst.iso"  #replace vms2 with real datastore name
+    iso         = "./debian.iso"  #replace vms2 with real datastore name
+    #memory      = 2048
+    #balloon     = 2048
+    #scsihw      = "virtio-scsi-pci"
+    #bootdisk    = "scsi0"
+  /*
+    disk {
+      size        = "10G"
+      storage     = "vms"
+      type        = "scsi"
+    }
+  
+    network {
+      bridge    = "vmbr1"
+      model     = "virtio"
+    }
+  */
+  }
+
+
+
+
+
+
+
 
 
 
