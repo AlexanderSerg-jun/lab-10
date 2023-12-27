@@ -177,7 +177,7 @@ resource "proxmox_vm_qemu" "test_server" {
   EOF
 }
 */
-
+/*
 resource "proxmox_vm_qemu" "ressource_testvm" {
     desc        = "VM test Server"
     name        = "test"
@@ -200,19 +200,68 @@ resource "proxmox_vm_qemu" "ressource_testvm" {
       storage     = "local-lvm"
       type        = "scsi"
     }
-  /*
+  
     network {
       bridge    = "vmbr0"
       model     = "virtio"
     }
-  */
   }
+*/
 
 
 
 
+locals {
+  vm_name          = "awesome-vm"
+  pve_node         = "pve-01"
+  iso_storage_pool = "cephfs"
+}
 
+resource "proxmox_cloud_init_disk" "ci" {
+  name      = local.vm_name
+  pve_node  = local.pve_node
+  storage   = local.iso_storage_pool
 
+  meta_data = yamlencode({
+    instance_id    = sha1(local.vm_name)
+    local-hostname = local.vm_name
+  })
+
+  user_data = <<EOT
+#cloud-config
+users:
+  - default
+ssh_authorized_keys:
+  - ssh-rsa AAAAB3N......
+EOT
+
+  network_config = yamlencode({
+    version = 1
+    config = [{
+      type = "physical"
+      name = "eth0"
+      subnets = [{
+        type            = "static"
+        address         = "192.168.1.100/24"
+        gateway         = "192.168.1.1"
+        dns_nameservers = ["1.1.1.1", "8.8.8.8"]
+      }]
+    }]
+  })
+}
+
+resource "proxmox_vm_qemu" "vm" {
+....
+  // Define a disk block with media type cdrom which reference the generated cloud-init disk
+  disk {
+    type    = "scsi"
+    media   = "cdrom"
+    storage = local.iso_storage_pool
+    volume  = proxmox_cloud_init_disk.ci.id
+    size    = proxmox_cloud_init_disk.ci.size
+  }
+...
+}
 
 
 

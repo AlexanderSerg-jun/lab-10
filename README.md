@@ -202,8 +202,10 @@ qm create 9000 --name "ubuntu-2004-cloudinit-template" --memory 2048 --cores 2 -
 
 
 
-
-
+Скачиваем нужный образ в хранилище local:
+```
+pveam download local centos-8-default_20191016_amd64.tar.xz
+```
 
 Скачаем iso-образ в директорий /var/lib/vz/template/iso/:
 ```
@@ -214,8 +216,8 @@ root@pve:~# wget http://cloud.debian.org/images/cloud/bookworm/latest/debian-12-
 
 Создадим новую роль 'TerraformProv':
 ```
-pveum role add TerraformProv -privs "\
-Datastore.AllocateSpace \
+pveum role add TerraformProv -privs \
+"Datastore.AllocateSpace \
 Datastore.Audit \
 Pool.Allocate \
 Sys.Audit \
@@ -234,8 +236,7 @@ VM.Config.Network \
 VM.Config.Options \
 VM.Migrate \
 VM.Monitor \
-VM.PowerMgmt \
-"
+VM.PowerMgmt"
 ```
 
 Создадим нового пользователя 'user':
@@ -267,6 +268,33 @@ pveum aclmod / -user user@pve -role TerraformProv
 root@pve:~# pveum acl modify / --user user@pve --roles TerraformProv
 root@pve:~#
 ```
+
+
+
+
+```
+apt update -y
+apt install libguestfs-tools -y
+virt-customize -a focal-server-cloudimg-amd64.img --install qemu-guest-agent
+qm create 9000 --name "ubuntu-2004-cloudinit-template" --memory 2048 --cores 2 --net0 virtio,bridge=vmbr0
+qm importdisk 9000 focal-server-cloudimg-amd64.img local-lvm
+qm set 9000 --scsihw virtio-scsi-pci --scsi0 local-lvm:vm-9000-disk-0
+qm set 9000 --boot c --bootdisk scsi0
+qm set 9000 --ide2 local-lvm:cloudinit
+qm set 9000 --serial0 socket --vga serial0
+qm set 9000 --agent enabled=1
+qm template 9000
+```
+
+Попробуем склонировать:
+```
+qm clone 9000 999 --name test-clone-cloud-init
+```
+
+
+
+
+
 
 
 
