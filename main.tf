@@ -29,7 +29,112 @@ locals {
     }
   }
   */
+
+
+  vm_name          = "awesome-vm"
+  pve_node         = "pve-01"
+  iso_storage_pool = "local"
 }
+/*
+resource "proxmox_cloud_init_disk" "ci" {
+  name      = local.vm_name
+  pve_node  = local.pve_node
+  storage   = local.iso_storage_pool
+
+  meta_data = yamlencode({
+    instance_id    = sha1(local.vm_name)
+    local-hostname = local.vm_name
+  })
+
+  user_data = <<EOT
+#cloud-config
+users:
+  - default
+ssh_authorized_keys:
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCy/vVoMC0cil2xFrWGuNwEk+AuyU561oc3Zyf8ayVc4No+FYnjsr+uvc8HZvCVVLHWq8aD11ytDl4D3Vc2rQ4r1fjBs4J04lVAQF0iTBOmWswrH38/DbTTGgjXM7gqAK8JtICStw4GyUUObqfL/viBMsrdefma7D2hDoRzxz41KVUyOtUZ7zgG3DmpqFoz1xmOhezg9na02ZHg9zGVTHdYOPx/PK6GRbBp0u2Yl8u2P57pXBaJHS/+emXc5n2lczplokeBTPfYqOORwZ8U281mBxTWtOozbxttSObx97K0Nn/c79mnloAZwShPq7BgFgRLuJt4t3TOQEdg1cIzp0lt4btsXq//HHyYv1KkvtYuaidNGJkKrofKIZTJojzq47Q61JLzU0KTF3dtel0cnomLtW3SulXJK68WN70KqoFtppDnqbJZARYfXTi0cCcxjL+kmJcx3L8FXzUztWklznxr9EPFOhkksPW52Qs1ev9vLn00XzKuLcvlYeuvIKCfx4k= user@rocky
+EOT
+
+  network_config = yamlencode({
+    version = 1
+    config = [{
+      type = "physical"
+      name = "eth0"
+      subnets = [{
+        type            = "static"
+        address         = "192.168.1.100/24"
+        gateway         = "192.168.1.1"
+        dns_nameservers = ["1.1.1.1", "8.8.8.8"]
+      }]
+    }]
+  })
+}
+
+resource "proxmox_vm_qemu" "vm" {
+  desc        = "VM test Server"
+  name        = "test"
+  target_node = "pve-01" #Internal name of your proxmox server
+  cores       = 2
+  sockets     = 2
+  onboot      = true
+  numa        = true
+  hotplug     = "network,disk,usb"
+  #iso         = "/tmp/debian-12.4.0-amd64-netinst.iso"  #replace vms2 with real datastore name
+  #iso         = "local:iso/debian-12.4.0-amd64-netinst.iso"  #replace vms2 with real datastore name
+  memory      = 1024
+  balloon     = 1024
+  scsihw      = "virtio-scsi-pci"
+  bootdisk    = "scsi0"
+  #agent       = 1
+  
+  // Define a disk block with media type cdrom which reference the generated cloud-init disk
+  disk {
+    type    = "scsi"
+    media   = "cdrom"
+    storage = local.iso_storage_pool
+    volume  = proxmox_cloud_init_disk.ci.id
+    size    = proxmox_cloud_init_disk.ci.size
+  }
+  
+  network {
+    bridge    = "vmbr0"
+    model     = "virtio"
+  }
+}
+*/
+/*
+resource "proxmox_vm_qemu" "ressource_testvm" {
+    desc        = "VM test Server"
+    name        = "test"
+    target_node = "pve" #Internal name of your proxmox server
+    cores       = 2
+    sockets     = 2
+    onboot      = true
+    numa        = true
+    hotplug     = "network,disk,usb"
+    #iso         = "/tmp/debian-12.4.0-amd64-netinst.iso"  #replace vms2 with real datastore name
+    iso         = "local:iso/debian-12.4.0-amd64-netinst.iso"  #replace vms2 with real datastore name
+    memory      = 2048
+    balloon     = 2048
+    scsihw      = "virtio-scsi-pci"
+    bootdisk    = "scsi0"
+    agent       = 1
+  
+    disk {
+      size        = "10G"
+      storage     = "local-lvm"
+      type        = "scsi"
+    }
+  
+    network {
+      bridge    = "vmbr0"
+      model     = "virtio"
+    }
+  }
+*/
+
+
+
+
 /*
 resource "yandex_vpc_network" "vpc" {
   folder_id = yandex_resourcemanager_folder.folders["lab-folder"].id
@@ -46,13 +151,13 @@ resource "yandex_vpc_subnet" "subnets" {
   route_table_id = yandex_vpc_route_table.rt.id
 }
 */
-/*
+
 resource "proxmox_vm_qemu" "srv_demo_1" {
   name = "srv-demo-1"
   #desc = "Ubuntu Server"
   #vmid = "401"
-  target_node = "pve"
-  iso = "/root/debian-12.4.0-amd64-netinst.iso"
+  target_node = "pve-01"
+  clone = "debian-12-generic-amd64"
 
   agent = 1
 
@@ -60,7 +165,7 @@ resource "proxmox_vm_qemu" "srv_demo_1" {
   cores = 2
   sockets = 1
   cpu = "host"
-  memory = 2048
+  memory = 1024
 
   network {
     bridge = "vmbr0"
@@ -78,11 +183,11 @@ resource "proxmox_vm_qemu" "srv_demo_1" {
   nameserver = "10.10.10.1"
   ciuser = "debian"
   sshkeys = <<EOF
-  ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCgaU3Ra1Wi5CNimg/P3tYlCPosUzAZw6D5t3yo7ZF0ZqHYHWMmvmtgHSl+NL04VCY444Yyysuy+F0797DxJCv2RhE1aEoukPYKvr/T9eMVwlb0m+Euqqux/XVSt+s0iL8ylK+5bozzEESoOgRhIToEGtp72GDBCnN2i0f2QFwwJIdf6d6L2AsO0FrxmpcSofdiG4e/C9wNlSBEEdtS+0munB+FNhezsHn0jXcihrULA2jozUg1YzjujIMQyZ6wyk6KokasbiL2rPUcVMC7/oHpoQo/qpewn6cN1xqyQVokbyqiE6X8jxYkM8gykPaR6lvZKKAwJf4gNOxa+U/TLSB2Pgfo+tkqFse0L0drJUCTzwc+0WfMDXKde0OSnO4+pnKx9YUvz/9GzhaFTKgudfRDyj0TlgjgFowVngfriL63NoXQLIJloh9uj3htTCg68ywKhJ5eL/6pSn9DwvbIZCM0nRIhoxNdsqkYjddTe05p95aZwc0Y7TI7/0SBsq1nzpE= user@redos
+  ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCy/vVoMC0cil2xFrWGuNwEk+AuyU561oc3Zyf8ayVc4No+FYnjsr+uvc8HZvCVVLHWq8aD11ytDl4D3Vc2rQ4r1fjBs4J04lVAQF0iTBOmWswrH38/DbTTGgjXM7gqAK8JtICStw4GyUUObqfL/viBMsrdefma7D2hDoRzxz41KVUyOtUZ7zgG3DmpqFoz1xmOhezg9na02ZHg9zGVTHdYOPx/PK6GRbBp0u2Yl8u2P57pXBaJHS/+emXc5n2lczplokeBTPfYqOORwZ8U281mBxTWtOozbxttSObx97K0Nn/c79mnloAZwShPq7BgFgRLuJt4t3TOQEdg1cIzp0lt4btsXq//HHyYv1KkvtYuaidNGJkKrofKIZTJojzq47Q61JLzU0KTF3dtel0cnomLtW3SulXJK68WN70KqoFtppDnqbJZARYfXTi0cCcxjL+kmJcx3L8FXzUztWklznxr9EPFOhkksPW52Qs1ev9vLn00XzKuLcvlYeuvIKCfx4k= user@rocky
   EOF
 
 }
-*/
+
 /*
 resource "proxmox_vm_qemu" "preprovision-test" {
   #preprovision      = true
@@ -177,95 +282,6 @@ resource "proxmox_vm_qemu" "test_server" {
   EOF
 }
 */
-/*
-resource "proxmox_vm_qemu" "ressource_testvm" {
-    desc        = "VM test Server"
-    name        = "test"
-    target_node = "pve" #Internal name of your proxmox server
-    cores       = 2
-    sockets     = 2
-    onboot      = true
-    numa        = true
-    hotplug     = "network,disk,usb"
-    #iso         = "/tmp/debian-12.4.0-amd64-netinst.iso"  #replace vms2 with real datastore name
-    iso         = "local:iso/debian-12.4.0-amd64-netinst.iso"  #replace vms2 with real datastore name
-    memory      = 2048
-    balloon     = 2048
-    scsihw      = "virtio-scsi-pci"
-    bootdisk    = "scsi0"
-    agent       = 1
-  
-    disk {
-      size        = "10G"
-      storage     = "local-lvm"
-      type        = "scsi"
-    }
-  
-    network {
-      bridge    = "vmbr0"
-      model     = "virtio"
-    }
-  }
-*/
-
-
-
-
-locals {
-  vm_name          = "awesome-vm"
-  pve_node         = "pve-01"
-  iso_storage_pool = "cephfs"
-}
-
-resource "proxmox_cloud_init_disk" "ci" {
-  name      = local.vm_name
-  pve_node  = local.pve_node
-  storage   = local.iso_storage_pool
-
-  meta_data = yamlencode({
-    instance_id    = sha1(local.vm_name)
-    local-hostname = local.vm_name
-  })
-
-  user_data = <<EOT
-#cloud-config
-users:
-  - default
-ssh_authorized_keys:
-  - ssh-rsa AAAAB3N......
-EOT
-
-  network_config = yamlencode({
-    version = 1
-    config = [{
-      type = "physical"
-      name = "eth0"
-      subnets = [{
-        type            = "static"
-        address         = "192.168.1.100/24"
-        gateway         = "192.168.1.1"
-        dns_nameservers = ["1.1.1.1", "8.8.8.8"]
-      }]
-    }]
-  })
-}
-
-resource "proxmox_vm_qemu" "vm" {
-....
-  // Define a disk block with media type cdrom which reference the generated cloud-init disk
-  disk {
-    type    = "scsi"
-    media   = "cdrom"
-    storage = local.iso_storage_pool
-    volume  = proxmox_cloud_init_disk.ci.id
-    size    = proxmox_cloud_init_disk.ci.size
-  }
-...
-}
-
-
-
-
 
 
 

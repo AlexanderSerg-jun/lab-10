@@ -199,12 +199,32 @@ qm create 9000 --name "ubuntu-2004-cloudinit-template" --memory 2048 --cores 2 -
 
 ```
 
-
-
+Смотрим доступные образы:
+```
+root@pve-01:~# pveam available --section system
+system          almalinux-9-default_20221108_amd64.tar.xz
+system          alpine-3.18-default_20230607_amd64.tar.xz
+system          archlinux-base_20230608-1_amd64.tar.zst
+system          centos-9-stream-default_20221109_amd64.tar.xz
+system          debian-11-standard_11.7-1_amd64.tar.zst
+system          debian-12-standard_12.2-1_amd64.tar.zst
+system          devuan-4.0-standard_4.0_amd64.tar.gz
+system          fedora-38-default_20230607_amd64.tar.xz
+system          fedora-39-default_20231118_amd64.tar.xz
+system          gentoo-current-openrc_20231009_amd64.tar.xz
+system          opensuse-15.4-default_20221109_amd64.tar.xz
+system          opensuse-15.5-default_20231118_amd64.tar.xz
+system          rockylinux-9-default_20221109_amd64.tar.xz
+system          ubuntu-20.04-standard_20.04-1_amd64.tar.gz
+system          ubuntu-22.04-standard_22.04-1_amd64.tar.zst
+system          ubuntu-23.04-standard_23.04-1_amd64.tar.zst
+system          ubuntu-23.10-standard_23.10-1_amd64.tar.zst
+root@pve-01:~# 
+```
 
 Скачиваем нужный образ в хранилище local:
 ```
-pveam download local centos-8-default_20191016_amd64.tar.xz
+pveam download local almalinux-9-default_20221108_amd64.tar.xz
 ```
 
 Скачаем iso-образ в директорий /var/lib/vz/template/iso/:
@@ -213,6 +233,19 @@ root@pve:~# wget https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debia
 
 root@pve:~# wget http://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2
 ```
+
+```
+qm create 7000 --name "debian-12-generic-amd64" --memory 1024 --cores 2 --net0 virtio,bridge=vmbr0
+qm importdisk 7000 debian-12-generic-amd64.qcow2 local-lvm
+qm set 7000 --scsihw virtio-scsi-pci --scsi0 local-lvm:vm-7000-disk-0
+qm set 7000 --boot c --bootdisk scsi0
+qm set 7000 --ide2 local-lvm:cloudinit
+qm set 7000 --serial0 socket --vga serial0
+qm set 7000 --agent enabled=1
+
+qm template 7000
+```
+
 
 Создадим новую роль 'TerraformProv':
 ```
@@ -236,34 +269,35 @@ VM.Config.Network \
 VM.Config.Options \
 VM.Migrate \
 VM.Monitor \
-VM.PowerMgmt"
+VM.PowerMgmt \
+SDN.Use"
 ```
 
 Создадим нового пользователя 'user':
 
 ```
-root@pve:~# pveum user add user@pve
+root@pve:~# pveum user add user@pve-01
 root@pve:~#
 ```
 
 Сгенерируем токен для пользователя 'user':
 ```
-root@pve:~# pveum user token add user@pve terraform --privsep 0
+root@pve-01:~# pveum user token add user@pve-01 terraform --privsep 0
 ┌──────────────┬──────────────────────────────────────┐
 │ key          │ value                                │
 ╞══════════════╪══════════════════════════════════════╡
-│ full-tokenid │ user@pve!terraform                   │
+│ full-tokenid │ user@pve-01!terraform                │
 ├──────────────┼──────────────────────────────────────┤
-│ info         │ {"privsep":0}                        │
+│ info         │ {"privsep":"0"}                      │
 ├──────────────┼──────────────────────────────────────┤
-│ value        │ 26f46a1c-9b1f-40c1-9575-dffa02c8381e │
+│ value        │ 018fa057-9eda-400a-8351-3d8c715c6983 │
 └──────────────┴──────────────────────────────────────┘
-root@pve:~#
+root@pve-01:~# 
 ```
 
 Добавим роль 'TerraformProv' только что созданному пользователю 'user': 
 ```
-pveum aclmod / -user user@pve -role TerraformProv
+pveum aclmod / -user user@pve-01 -role TerraformProv
 
 root@pve:~# pveum acl modify / --user user@pve --roles TerraformProv
 root@pve:~#
@@ -294,6 +328,12 @@ qm clone 9000 999 --name test-clone-cloud-init
 
 
 
+Error: error from PVE: "500 QEMU guest agent is not running"
+│ , QEMU Agent is enabled in you configuration but non installed/not working on your vm
+│ 
+│   with proxmox_vm_qemu.srv_demo_1,
+│   on main.tf line 155, in resource "proxmox_vm_qemu" "srv_demo_1":
+│  155: resource "proxmox_vm_qemu" "srv_demo_1" {
 
 
 
@@ -446,3 +486,250 @@ ssh -i ~/.ssh/id_rsa ubuntu@10.98.1.96
 # stop and destroy VM
 sudo qm stop 999 && sudo qm destroy 999
  Post Views: 44,979
+
+
+
+
+
+ ```
+ [user@rocky9 lab-10]$ terraform plan
+
+Terraform used the selected providers to generate the following execution plan.
+Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # proxmox_cloud_init_disk.ci will be created
+  + resource "proxmox_cloud_init_disk" "ci" {
+      + id             = (known after apply)
+      + meta_data      = <<-EOT
+            "instance_id": "984ca4360083316e76b54bf1c949e4870b1efb3e"
+            "local-hostname": "awesome-vm"
+        EOT
+      + name           = "awesome-vm"
+      + network_config = <<-EOT
+            "config":
+            - "name": "eth0"
+              "subnets":
+              - "address": "192.168.1.100/24"
+                "dns_nameservers":
+                - "1.1.1.1"
+                - "8.8.8.8"
+                "gateway": "192.168.1.1"
+                "type": "static"
+              "type": "physical"
+            "version": 1
+        EOT
+      + pve_node       = "pve-01"
+      + sha256         = (known after apply)
+      + size           = (known after apply)
+      + storage        = "local-thin"
+      + user_data      = <<-EOT
+            #cloud-config
+            users:
+              - default
+            ssh_authorized_keys:
+              - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCy/vVoMC0cil2xFrWGuNwEk+AuyU561oc3Zyf8ayVc4No+FYnjsr+uvc8HZvCVVLHWq8aD11ytDl4D3Vc2rQ4r1fjBs4J04lVAQF0iTBOmWswrH38/DbTTGgjXM7gqAK8JtICStw4GyUUObqfL/viBMsrdefma7D2hDoRzxz41KVUyOtUZ7zgG3DmpqFoz1xmOhezg9na02ZHg9zGVTHdYOPx/PK6GRbBp0u2Yl8u2P57pXBaJHS/+emXc5n2lczplokeBTPfYqOORwZ8U281mBxTWtOozbxttSObx97K0Nn/c79mnloAZwShPq7BgFgRLuJt4t3TOQEdg1cIzp0lt4btsXq//HHyYv1KkvtYuaidNGJkKrofKIZTJojzq47Q61JLzU0KTF3dtel0cnomLtW3SulXJK68WN70KqoFtppDnqbJZARYfXTi0cCcxjL+kmJcx3L8FXzUztWklznxr9EPFOhkksPW52Qs1ev9vLn00XzKuLcvlYeuvIKCfx4k= user@rocky
+        EOT
+    }
+
+  # proxmox_vm_qemu.vm will be created
+  + resource "proxmox_vm_qemu" "vm" {
+      + additional_wait           = 5
+      + automatic_reboot          = true
+      + balloon                   = 1024
+      + bios                      = "seabios"
+      + boot                      = (known after apply)
+      + bootdisk                  = "scsi0"
+      + clone_wait                = 10
+      + cores                     = 2
+      + cpu                       = "host"
+      + default_ipv4_address      = (known after apply)
+      + define_connection_info    = true
+      + desc                      = "VM test Server"
+      + force_create              = false
+      + full_clone                = true
+      + guest_agent_ready_timeout = 100
+      + hotplug                   = "network,disk,usb"
+      + id                        = (known after apply)
+      + kvm                       = true
+      + memory                    = 1024
+      + name                      = "test"
+      + nameserver                = (known after apply)
+      + numa                      = true
+      + onboot                    = true
+      + oncreate                  = false
+      + preprovision              = true
+      + reboot_required           = (known after apply)
+      + scsihw                    = "virtio-scsi-pci"
+      + searchdomain              = (known after apply)
+      + sockets                   = 2
+      + ssh_host                  = (known after apply)
+      + ssh_port                  = (known after apply)
+      + tablet                    = true
+      + target_node               = "pve-01"
+      + unused_disk               = (known after apply)
+      + vcpus                     = 0
+      + vlan                      = -1
+      + vm_state                  = "running"
+      + vmid                      = (known after apply)
+
+      + disk {
+          + backup             = true
+          + cache              = "none"
+          + file               = (known after apply)
+          + format             = (known after apply)
+          + iops               = 0
+          + iops_max           = 0
+          + iops_max_length    = 0
+          + iops_rd            = 0
+          + iops_rd_max        = 0
+          + iops_rd_max_length = 0
+          + iops_wr            = 0
+          + iops_wr_max        = 0
+          + iops_wr_max_length = 0
+          + iothread           = 0
+          + mbps               = 0
+          + mbps_rd            = 0
+          + mbps_rd_max        = 0
+          + mbps_wr            = 0
+          + mbps_wr_max        = 0
+          + media              = "cdrom"
+          + replicate          = 0
+          + size               = (known after apply)
+          + slot               = (known after apply)
+          + ssd                = 0
+          + storage            = "local-thin"
+          + storage_type       = (known after apply)
+          + type               = "scsi"
+          + volume             = (known after apply)
+        }
+
+      + network {
+          + bridge    = "vmbr0"
+          + firewall  = false
+          + link_down = false
+          + macaddr   = (known after apply)
+          + model     = "virtio"
+          + queues    = (known after apply)
+          + rate      = (known after apply)
+          + tag       = -1
+        }
+    }
+
+Plan: 2 to add, 0 to change, 0 to destroy.
+
+───────────────────────────────────────────────────────────────────────────────
+
+Note: You didn't use the -out option to save this plan, so Terraform can't
+guarantee to take exactly these actions if you run "terraform apply" now.
+[user@rocky9 lab-10]$ 
+```
+
+
+
+
+
+
+
+
+```
+[user@rocky9 lab-10]$ terraform apply -auto-approve
+
+Terraform used the selected providers to generate the following execution plan.
+Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # proxmox_vm_qemu.srv_demo_1 will be created
+  + resource "proxmox_vm_qemu" "srv_demo_1" {
+      + additional_wait           = 5
+      + agent                     = 1
+      + automatic_reboot          = true
+      + balloon                   = 0
+      + bios                      = "seabios"
+      + boot                      = (known after apply)
+      + bootdisk                  = (known after apply)
+      + ciuser                    = "debian"
+      + clone                     = "debian-12-generic-amd64"
+      + clone_wait                = 10
+      + cores                     = 2
+      + cpu                       = "host"
+      + default_ipv4_address      = (known after apply)
+      + define_connection_info    = true
+      + force_create              = false
+      + full_clone                = true
+      + guest_agent_ready_timeout = 100
+      + hotplug                   = "network,disk,usb"
+      + id                        = (known after apply)
+      + ipconfig0                 = "ip=10.10.10.11/24,gw=10.10.10.1"
+      + kvm                       = true
+      + memory                    = 1024
+      + name                      = "srv-demo-1"
+      + nameserver                = "10.10.10.1"
+      + onboot                    = false
+      + oncreate                  = false
+      + os_type                   = "debian"
+      + preprovision              = true
+      + reboot_required           = (known after apply)
+      + scsihw                    = "lsi"
+      + searchdomain              = (known after apply)
+      + sockets                   = 1
+      + ssh_host                  = (known after apply)
+      + ssh_port                  = (known after apply)
+      + sshkeys                   = <<-EOT
+            ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCy/vVoMC0cil2xFrWGuNwEk+AuyU561oc3Zyf8ayVc4No+FYnjsr+uvc8HZvCVVLHWq8aD11ytDl4D3Vc2rQ4r1fjBs4J04lVAQF0iTBOmWswrH38/DbTTGgjXM7gqAK8JtICStw4GyUUObqfL/viBMsrdefma7D2hDoRzxz41KVUyOtUZ7zgG3DmpqFoz1xmOhezg9na02ZHg9zGVTHdYOPx/PK6GRbBp0u2Yl8u2P57pXBaJHS/+emXc5n2lczplokeBTPfYqOORwZ8U281mBxTWtOozbxttSObx97K0Nn/c79mnloAZwShPq7BgFgRLuJt4t3TOQEdg1cIzp0lt4btsXq//HHyYv1KkvtYuaidNGJkKrofKIZTJojzq47Q61JLzU0KTF3dtel0cnomLtW3SulXJK68WN70KqoFtppDnqbJZARYfXTi0cCcxjL+kmJcx3L8FXzUztWklznxr9EPFOhkksPW52Qs1ev9vLn00XzKuLcvlYeuvIKCfx4k= user@rocky
+        EOT
+      + tablet                    = true
+      + target_node               = "pve-01"
+      + unused_disk               = (known after apply)
+      + vcpus                     = 0
+      + vlan                      = -1
+      + vm_state                  = "running"
+      + vmid                      = (known after apply)
+
+      + disk {
+          + backup             = true
+          + cache              = "none"
+          + file               = (known after apply)
+          + format             = (known after apply)
+          + iops               = 0
+          + iops_max           = 0
+          + iops_max_length    = 0
+          + iops_rd            = 0
+          + iops_rd_max        = 0
+          + iops_rd_max_length = 0
+          + iops_wr            = 0
+          + iops_wr_max        = 0
+          + iops_wr_max_length = 0
+          + iothread           = 0
+          + mbps               = 0
+          + mbps_rd            = 0
+          + mbps_rd_max        = 0
+          + mbps_wr            = 0
+          + mbps_wr_max        = 0
+          + media              = (known after apply)
+          + replicate          = 0
+          + size               = "20G"
+          + slot               = (known after apply)
+          + ssd                = 0
+          + storage            = "local-lvm"
+          + storage_type       = (known after apply)
+          + type               = "virtio"
+          + volume             = (known after apply)
+        }
+
+      + network {
+          + bridge    = "vmbr0"
+          + firewall  = false
+          + link_down = false
+          + macaddr   = (known after apply)
+          + model     = "virtio"
+          + queues    = (known after apply)
+          + rate      = (known after apply)
+          + tag       = -1
+        }
+    }
+```
