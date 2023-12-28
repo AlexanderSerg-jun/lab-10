@@ -18,7 +18,7 @@
         dest: /etc/hosts
         block: |-
           {% for item in groups['all'] %}
-          {{ hostvars[item]['ip'] }} {{ item }}.{{ domain }} {{ item }}
+          {{ hostvars[item]['ansible_host'] }} {{ item }}.{{ domain }} {{ item }}
           {% endfor %}
         state: present
         create: true
