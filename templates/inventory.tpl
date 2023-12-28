@@ -6,7 +6,7 @@ ${host.hostname} ansible_host=${host.network[0].ip}
 
 [bes]
 %{ for host in bes ~}
-${host.hostname} ansible_host=${bhost.network[0].ip}
+${host.hostname} ansible_host=${host.network[0].ip}
 %{ endfor ~}
 
 [lbs]
