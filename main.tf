@@ -19,10 +19,10 @@ resource "proxmox_vm_qemu" "dbs" {
   target_node = local.proxmox_host
   clone = local.template_name
   agent = 1
-  cores = 1
+  cores = 2
   sockets = 1
   cpu = "host"
-  memory = 1024
+  memory = 2048
   onboot = true
 
   network {
@@ -51,10 +51,10 @@ resource "proxmox_vm_qemu" "bes" {
   target_node = local.proxmox_host
   clone = local.template_name
   agent = 1
-  cores = 1
+  cores = 2
   sockets = 1
   cpu = "host"
-  memory = 1024
+  memory = 2048
   onboot = true
 
   network {
@@ -83,10 +83,10 @@ resource "proxmox_vm_qemu" "lbs" {
   target_node = local.proxmox_host
   clone = local.template_name
   agent = 1
-  cores = 1
+  cores = 2
   sockets = 1
   cpu = "host"
-  memory = 1024
+  memory = 2048
   onboot = true
 
   network {
