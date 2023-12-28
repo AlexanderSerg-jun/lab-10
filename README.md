@@ -26,6 +26,62 @@ https://github.com/SergSha/lab-10.git
 
 <img src="pics/infra.png" alt="infra.png" />
 
+Обновим систему и установим необходимые пакеты:
+```
+apt update && apt install -y wget unzip git ansible && \
+wget https://hashicorp-releases.yandexcloud.net/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip && \
+unzip -u terraform_1.6.6_linux_amd64.zip -d /bin/
+```
+
+Укажем источник, из которого будет устанавливаться провайдер:
+```
+cat > ~/.terraform << EOF
+provider_installation {
+  network_mirror {
+    url = "https://terraform-mirror.yandexcloud.net/"
+    include = ["registry.terraform.io/*/*"]
+  }
+  direct {
+    exclude = ["registry.terraform.io/*/*"]
+  }
+}
+EOF
+```
+
+При необходимости генерируем пару ssh ключей:
+```
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -q
+```
+
+
+################################
+```
+wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg && \
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list && \
+apt update && apt install terraform
+```
+
+Обновим систему и установим необходимые пакеты: gnupg, software-properties-common, которые будем использовать эти пакеты для проверки подписи GPG HashiCorp и установки репозитория пакетов Debian от HashiCorp:
+```
+apt update && apt install -y gnupg software-properties-common
+```
+
+Установите ключ HashiCorp GPG:
+```
+wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
+```
+
+Проверим отпечаток пальца на ключе:
+```
+gpg --no-default-keyring --keyring /usr/share/keyrings/hashicorp-archive-keyring.gpg --fingerprint
+```
+################################
+
+
+
+
+
+
 Для начала получаем OAUTH токен:
 ```
 https://cloud.yandex.ru/docs/iam/concepts/authorization/oauth-token
@@ -235,16 +291,35 @@ root@pve:~# wget http://cloud.debian.org/images/cloud/bookworm/latest/debian-12-
 ```
 
 ```
-qm create 7000 --name "debian-12-generic-amd64" --memory 1024 --cores 2 --net0 virtio,bridge=vmbr0
-qm importdisk 7000 debian-12-generic-amd64.qcow2 local-lvm
-qm set 7000 --scsihw virtio-scsi-pci --scsi0 local-lvm:vm-7000-disk-0
-qm set 7000 --boot c --bootdisk scsi0
-qm set 7000 --ide2 local-lvm:cloudinit
-qm set 7000 --serial0 socket --vga serial0
-qm set 7000 --agent enabled=1
+apt update -y && apt install libguestfs-tools -y
+virt-customize -a debian-12-generic-amd64.qcow2 --install qemu-guest-agent
 
-qm template 7000
+qm create 9999 --name "debian-12-generic-amd64" --memory 1024 --cores 2 --net0 virtio,bridge=vmbr0 && \
+qm importdisk 9999 debian-12-generic-amd64.qcow2 local-lvm && \
+qm set 9999 --scsihw virtio-scsi-pci --scsi0 local-lvm:vm-9999-disk-0 && \
+qm set 9999 --boot c --bootdisk scsi0 && \
+qm set 9999 --ide2 local-lvm:cloudinit && \
+qm set 9999 --serial0 socket --vga serial0 && \
+qm set 9999 --agent enabled=1 && \
+qm template 9999
 ```
+
+
+
+```
+apt update -y && apt install libguestfs-tools -y
+virt-customize -a focal-server-cloudimg-amd64.img --install qemu-guest-agent
+qm create 9000 --name "ubuntu-2004-cloudinit-template" --memory 2048 --cores 2 --net0 virtio,bridge=vmbr0
+qm importdisk 9000 focal-server-cloudimg-amd64.img local-lvm
+qm set 9000 --scsihw virtio-scsi-pci --scsi0 local-lvm:vm-9000-disk-0
+qm set 9000 --boot c --bootdisk scsi0
+qm set 9000 --ide2 local-lvm:cloudinit
+qm set 9000 --serial0 socket --vga serial0
+qm set 9000 --agent enabled=1
+qm template 9000
+```
+
+
 
 
 Создадим новую роль 'TerraformProv':
@@ -304,21 +379,6 @@ root@pve:~#
 ```
 
 
-
-
-```
-apt update -y
-apt install libguestfs-tools -y
-virt-customize -a focal-server-cloudimg-amd64.img --install qemu-guest-agent
-qm create 9000 --name "ubuntu-2004-cloudinit-template" --memory 2048 --cores 2 --net0 virtio,bridge=vmbr0
-qm importdisk 9000 focal-server-cloudimg-amd64.img local-lvm
-qm set 9000 --scsihw virtio-scsi-pci --scsi0 local-lvm:vm-9000-disk-0
-qm set 9000 --boot c --bootdisk scsi0
-qm set 9000 --ide2 local-lvm:cloudinit
-qm set 9000 --serial0 socket --vga serial0
-qm set 9000 --agent enabled=1
-qm template 9000
-```
 
 Попробуем склонировать:
 ```
