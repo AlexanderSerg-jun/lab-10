@@ -153,9 +153,10 @@ resource "yandex_vpc_subnet" "subnets" {
 */
 
 resource "proxmox_vm_qemu" "srv_demo_1" {
-  name = "srv-demo-1"
+  count = 1
+  name = "srv-demo-${count.index + 1}"
   #desc = "Ubuntu Server"
-  #vmid = "401"
+  vmid = "40${count.index + 1}"
   target_node = "pve-01"
   clone = "debian-12-generic-amd64"
 
@@ -175,12 +176,12 @@ resource "proxmox_vm_qemu" "srv_demo_1" {
   disk {
     storage = "local-lvm"
     type = "virtio"
-    size = "20G"
+    size = "10G"
   }
   os_type = "debian"
 
-  ipconfig0 = "ip=10.10.10.11/24,gw=10.10.10.1"
-  nameserver = "10.10.10.1"
+  ipconfig0 = "ip=192.168.117.4${count.index + 1}/24,gw=192.168.117.1"
+  nameserver = "192.168.117.1"
   ciuser = "debian"
   sshkeys = <<EOF
   ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDV8TR85w7Kjp9MKUCo+NwExCzsbeGEXHqJ4102QvPq2Neqvto8i23Uh/JwqTJOQYMKCy38kpTdfuK2M9xu6LEge8R+su8A3pSBvnNKg4WBIiEJJU8+g0MUsaCzPUOj+/aVdmctZyK1qYpGchg1LTptyjMS0FDGsRZJpmX6PS/ZxvHCACcDLJAzu5r8A1+nSr2kWwmXJ1tDg1R9eFDDtCB7PUHCiogs/4c1uKMVP8ZyRg7fXVVHtv1PKzc9c8kRcLLzSBmI17hsRp0fVcxUnaT/KU5/Awc+kTUNtMSy1xApQHqnR7vN4VBx/jfEZHP8qAMcuP5N/kTTYGbfeOTVmsgR root@pve-01
