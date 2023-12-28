@@ -22,21 +22,18 @@ locals {
   template_name = "debian-12-generic-amd64"
 }
 
-resource "proxmox_vm_qemu" "srv_demo" {
-  count = 2
-  name = "srv-demo-${count.index + 1}"
-  desc = "Debian Server"
-  vmid = "40${count.index + 1}"
+resource "proxmox_vm_qemu" "dbs" {
+  count = 1
+  name = "db-${count.index + 1}"
+  desc = "Database Debian Server"
+  #vmid = "40${count.index + 1}"
   target_node = local.proxmox_host
   clone = local.template_name
-
   agent = 1
-
-  #clone = "debian-server-focal"
   cores = 2
   sockets = 1
   cpu = "host"
-  memory = 1024
+  memory = 512
 
   network {
     bridge = "vmbr0"
@@ -48,13 +45,92 @@ resource "proxmox_vm_qemu" "srv_demo" {
     type = "virtio"
     size = "10G"
   }
-  os_type = "cloud-init"
 
+  os_type = "cloud-init"
   ipconfig0 = "ip=192.168.117.4${count.index + 1}/24,gw=192.168.117.1"
   nameserver = "192.168.117.1"
   ciuser = local.vm_user
   sshkeys = file(local.ssh_public_key)
+}
 
+resource "proxmox_vm_qemu" "bes" {
+  count = 1
+  name = "be-${count.index + 1}"
+  desc = "Backend Debian Server"
+  #vmid = "40${count.index + 1}"
+  target_node = local.proxmox_host
+  clone = local.template_name
+  agent = 1
+  cores = 2
+  sockets = 1
+  cpu = "host"
+  memory = 512
+
+  network {
+    bridge = "vmbr0"
+    model = "virtio"
+  }
+
+  disk {
+    storage = "local-lvm"
+    type = "virtio"
+    size = "10G"
+  }
+
+  os_type = "cloud-init"
+  ipconfig0 = "ip=192.168.117.5${count.index + 1}/24,gw=192.168.117.1"
+  nameserver = "192.168.117.1"
+  ciuser = local.vm_user
+  sshkeys = file(local.ssh_public_key)
+}
+
+resource "proxmox_vm_qemu" "lbs" {
+  count = 1
+  name = "lb-${count.index + 1}"
+  desc = "LoadBalance Debian Server"
+  #vmid = "40${count.index + 1}"
+  target_node = local.proxmox_host
+  clone = local.template_name
+  agent = 1
+  cores = 2
+  sockets = 1
+  cpu = "host"
+  memory = 512
+
+  network {
+    bridge = "vmbr0"
+    model = "virtio"
+  }
+
+  disk {
+    storage = "local-lvm"
+    type = "virtio"
+    size = "10G"
+  }
+
+  os_type = "cloud-init"
+  ipconfig0 = "ip=192.168.117.6${count.index + 1}/24,gw=192.168.117.1"
+  nameserver = "192.168.117.1"
+  ciuser = local.vm_user
+  sshkeys = file(local.ssh_public_key)
+}
+
+resource "local_file" "inventory_file" {
+  content = templatefile("${path.module}/templates/inventory.tpl",
+    {
+      dbs    = proxmox_vm_qemu.dbs[*]
+      bes    = proxmox_vm_qemu.bes[*]
+      lbs    = proxmox_vm_qemu.lbs[*]
+
+      db_ip_address_list  = proxmox_lxc.db[*].network[0].ip
+      db_vm_names         = proxmox_lxc.db[*].hostname
+      app_ip_address_list = proxmox_lxc.app[*].network[0].ip
+      app_vm_names        = proxmox_lxc.app[*].hostname
+      lb_ip_address_list  = proxmox_lxc.lb[*].network[0].ip
+      lb_vm_names         = proxmox_lxc.lb[*].hostname
+    }
+  )
+  filename = "${path.module}/inventory.ini"
 }
 
 /*
