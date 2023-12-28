@@ -46,7 +46,7 @@
 
   - name: Set new root password
     ansible.builtin.shell: >
-      mysql --connect-expired-password -e "ALTER USER '{{ mysql_root_user }}'@'localhost' IDENTIFIED WITH mysql_native_password BY '{{ mysql_root_password }}';"
+      mysql --connect-expired-password -e "ALTER USER '{{ mysql_root_user }}'@'localhost' IDENTIFIED WITH caching_sha2_password BY '{{ mysql_root_password }}';"
     changed_when: false
     failed_when: false
 
@@ -158,7 +158,7 @@
     notify: restart percona
 
   - name: Set new root password
-    ansible.builtin.shell: mysql --connect-expired-password -e "ALTER USER '{{ mysql_root_user }}'@'localhost' IDENTIFIED WITH mysql_native_password BY '{{ mysql_root_password }}';"
+    ansible.builtin.shell: mysql --connect-expired-password -e "ALTER USER '{{ mysql_root_user }}'@'localhost' IDENTIFIED WITH caching_sha2_password BY '{{ mysql_root_password }}';"
     changed_when: false
     failed_when: false
 
