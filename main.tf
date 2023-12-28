@@ -34,6 +34,7 @@ resource "proxmox_vm_qemu" "dbs" {
   sockets = 1
   cpu = "host"
   memory = 512
+  onboot = true
 
   network {
     bridge = "vmbr0"
@@ -47,8 +48,8 @@ resource "proxmox_vm_qemu" "dbs" {
   }
 
   os_type = "cloud-init"
-  ipconfig0 = "dhcp"
-  #ipconfig0 = "ip=192.168.117.4${count.index + 1}/24,gw=192.168.117.1"
+  #ipconfig0 = "dhcp"
+  ipconfig0 = "ip=192.168.117.4${count.index + 1}/24,gw=192.168.117.1"
   #nameserver = "192.168.117.1"
   ciuser = local.vm_user
   sshkeys = file(local.ssh_public_key)
@@ -66,6 +67,7 @@ resource "proxmox_vm_qemu" "bes" {
   sockets = 1
   cpu = "host"
   memory = 512
+  onboot = true
 
   network {
     bridge = "vmbr0"
@@ -79,8 +81,8 @@ resource "proxmox_vm_qemu" "bes" {
   }
 
   os_type = "cloud-init"
-  ipconfig0 = "dhcp"
-  #ipconfig0 = "ip=192.168.117.5${count.index + 1}/24,gw=192.168.117.1"
+  #ipconfig0 = "dhcp"
+  ipconfig0 = "ip=192.168.117.5${count.index + 1}/24,gw=192.168.117.1"
   #nameserver = "192.168.117.1"
   ciuser = local.vm_user
   sshkeys = file(local.ssh_public_key)
@@ -98,6 +100,7 @@ resource "proxmox_vm_qemu" "lbs" {
   sockets = 1
   cpu = "host"
   memory = 512
+  onboot = true
 
   network {
     bridge = "vmbr0"
@@ -111,8 +114,8 @@ resource "proxmox_vm_qemu" "lbs" {
   }
 
   os_type = "cloud-init"
-  ipconfig0 = "dhcp"
-  #ipconfig0 = "ip=192.168.117.6${count.index + 1}/24,gw=192.168.117.1"
+  #ipconfig0 = "dhcp"
+  ipconfig0 = "ip=192.168.117.6${count.index + 1}/24,gw=192.168.117.1"
   #nameserver = "192.168.117.1"
   ciuser = local.vm_user
   sshkeys = file(local.ssh_public_key)
