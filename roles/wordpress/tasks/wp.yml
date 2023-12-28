@@ -32,7 +32,7 @@
     url: https://wordpress.org/latest.tar.gz
     dest: /tmp/wordpress.tar.gz
   register: download
-  when: inventory_hostname in 'backend-01'
+  #when: inventory_hostname in 'be-01'
 
 - name: Wordpress | Unarchive wordpress package
   ansible.builtin.unarchive:
@@ -41,7 +41,7 @@
     remote_src: yes
     owner: nginx
     group: nginx
-  when: download.changed and inventory_hostname in 'backend-01'
+  when: download.changed
     
 - name: Wordpress | Configure wordpress
   ansible.builtin.template:
@@ -49,5 +49,5 @@
     dest: /var/www/wordpress/wp-config.php
     owner: nginx
     group: nginx
-  when: download.changed and inventory_hostname in 'backend-01'
+  when: download.changed
   
