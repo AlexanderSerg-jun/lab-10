@@ -3,37 +3,26 @@ locals {
   ssh_public_key  = "~/.ssh/id_rsa.pub"
   ssh_private_key = "~/.ssh/id_rsa"
 
-  #subnet_cidrs  = ["10.10.50.0/24"]
-  #subnet_name   = "my_vpc_subnet"
-  jump_count     = "0"
-  db_count       = "1"
-  iscsi_count    = "1"
-  backend_count  = "2"
-  nginx_count    = "2"
-  /*
-  disk = {
-    "web" = {
-      "size" = "1"
-    }
-  }
-  */
-
-  proxmox_host = "pve-01"
+  proxmox_host  = "pve-01"
   template_name = "debian-12-generic-amd64"
+
+  dbs_count = "1"
+  bes_count = "1"
+  lbs_count = "1"
 }
 
 resource "proxmox_vm_qemu" "dbs" {
-  count = 1
-  name = "db-${count.index + 1}"
+  count = local.dbs_count
+  name = "db-${format("%02d", count.index + 1)}"
   desc = "Database Debian Server"
   #vmid = "40${count.index + 1}"
   target_node = local.proxmox_host
   clone = local.template_name
   agent = 1
-  cores = 2
+  cores = 1
   sockets = 1
   cpu = "host"
-  memory = 512
+  memory = 1024
   onboot = true
 
   network {
@@ -48,7 +37,6 @@ resource "proxmox_vm_qemu" "dbs" {
   }
 
   os_type = "cloud-init"
-  #ipconfig0 = "dhcp"
   ipconfig0 = "ip=192.168.117.4${count.index + 1}/24,gw=192.168.117.1"
   #nameserver = "192.168.117.1"
   ciuser = local.vm_user
@@ -56,17 +44,17 @@ resource "proxmox_vm_qemu" "dbs" {
 }
 
 resource "proxmox_vm_qemu" "bes" {
-  count = 1
-  name = "be-${count.index + 1}"
+  count = local.bes_count
+  name = "be-${format("%02d", count.index + 1)}"
   desc = "Backend Debian Server"
   #vmid = "40${count.index + 1}"
   target_node = local.proxmox_host
   clone = local.template_name
   agent = 1
-  cores = 2
+  cores = 1
   sockets = 1
   cpu = "host"
-  memory = 512
+  memory = 1024
   onboot = true
 
   network {
@@ -81,7 +69,6 @@ resource "proxmox_vm_qemu" "bes" {
   }
 
   os_type = "cloud-init"
-  #ipconfig0 = "dhcp"
   ipconfig0 = "ip=192.168.117.5${count.index + 1}/24,gw=192.168.117.1"
   #nameserver = "192.168.117.1"
   ciuser = local.vm_user
@@ -89,17 +76,17 @@ resource "proxmox_vm_qemu" "bes" {
 }
 
 resource "proxmox_vm_qemu" "lbs" {
-  count = 1
-  name = "lb-${count.index + 1}"
+  count = local.lbs_count
+  name = "lb-${format("%02d", count.index + 1)}"
   desc = "LoadBalance Debian Server"
   #vmid = "40${count.index + 1}"
   target_node = local.proxmox_host
   clone = local.template_name
   agent = 1
-  cores = 2
+  cores = 1
   sockets = 1
   cpu = "host"
-  memory = 512
+  memory = 1024
   onboot = true
 
   network {
@@ -114,7 +101,6 @@ resource "proxmox_vm_qemu" "lbs" {
   }
 
   os_type = "cloud-init"
-  #ipconfig0 = "dhcp"
   ipconfig0 = "ip=192.168.117.6${count.index + 1}/24,gw=192.168.117.1"
   #nameserver = "192.168.117.1"
   ciuser = local.vm_user
@@ -132,238 +118,9 @@ resource "local_file" "inventory_file" {
   filename = "${path.module}/inventory.ini"
 }
 
-/*
-resource "proxmox_vm_qemu" "preprovision-test" {
-  #preprovision      = true
-  os_type           = "ubuntu"
-  agent             = 0
-  boot              = "order=net0;scsi0"
-  pxe               = true
-  target_node       = "pve"
-  ssh_forward_ip    = "10.0.0.1"
-  ssh_user          = "terraform"
-  ssh_private_key   = <<EOF
------BEGIN RSA PRIVATE KEY-----
-private ssh key terraform
------END RSA PRIVATE KEY-----
-EOF
-  os_network_config = <<EOF
-auto eth0
-iface eth0 inet dhcp
-EOF
-
-  connection {
-    type        = "ssh"
-    user        = "${self.ssh_user}"
-    private_key = "${self.ssh_private_key}"
-    host        = "${self.ssh_host}"
-    port        = "${self.ssh_port}"
-  }
-}
-*/
 
 
 
-
-/*
-
-module "jump-servers" {
-  source         = "./modules/instances"
-  count          = local.jump_count
-  vm_name        = "jump-${format("%02d", count.index + 1)}"
-  vpc_name       = local.vpc_name
-  folder_id      = yandex_resourcemanager_folder.folders["lab-folder"].id
-  network_interface = {
-    for subnet in yandex_vpc_subnet.subnets :
-    subnet.name => {
-      subnet_id = subnet.id
-      nat       = true
-    }
-    if subnet.name == "lab-subnet"
-  }
-  #subnet_cidrs   = yandex_vpc_subnet.subnet.v4_cidr_blocks
-  #subnet_name    = yandex_vpc_subnet.subnet.name
-  #subnet_id      = yandex_vpc_subnet.subnet.id
-  vm_user        = local.vm_user
-  ssh_public_key = local.ssh_public_key
-  secondary_disk = {}
-  depends_on     = [yandex_compute_disk.disks]
-}
-
-data "yandex_compute_instance" "jump-servers" {
-  count      = length(module.jump-servers)
-  name       = module.jump-servers[count.index].vm_name
-  folder_id  = yandex_resourcemanager_folder.folders["lab-folder"].id
-  depends_on = [module.jump-servers]
-}
-
-module "db-servers" {
-  source         = "./modules/instances"
-  count          = local.db_count
-  vm_name        = "db-${format("%02d", count.index + 1)}"
-  vpc_name       = local.vpc_name
-  folder_id      = yandex_resourcemanager_folder.folders["lab-folder"].id
-  network_interface = {
-    for subnet in yandex_vpc_subnet.subnets :
-    subnet.name => {
-      subnet_id = subnet.id
-      #nat       = true
-    }
-    if subnet.name == "lab-subnet"
-  }
-  #subnet_cidrs   = yandex_vpc_subnet.subnet.v4_cidr_blocks
-  #subnet_name    = yandex_vpc_subnet.subnet.name
-  #subnet_id      = yandex_vpc_subnet.subnet.id
-  vm_user        = local.vm_user
-  ssh_public_key = local.ssh_public_key
-  secondary_disk = {}
-  depends_on     = [yandex_compute_disk.disks]
-}
-
-data "yandex_compute_instance" "db-servers" {
-  count      = length(module.db-servers)
-  name       = module.db-servers[count.index].vm_name
-  folder_id  = yandex_resourcemanager_folder.folders["lab-folder"].id
-  depends_on = [module.db-servers]
-}
-
-module "iscsi-servers" {
-  source         = "./modules/instances"
-  count          = local.iscsi_count
-  vm_name        = "iscsi-${format("%02d", count.index + 1)}"
-  vpc_name       = local.vpc_name
-  folder_id      = yandex_resourcemanager_folder.folders["lab-folder"].id
-  network_interface = {
-    for subnet in yandex_vpc_subnet.subnets :
-    subnet.name => {
-      subnet_id = subnet.id
-      #nat       = true
-    }
-    if subnet.name == "lab-subnet" #|| subnet.name == "backend-subnet"
-  }
-  #subnet_cidrs   = yandex_vpc_subnet.subnet.v4_cidr_blocks
-  #subnet_name    = yandex_vpc_subnet.subnet.name
-  #subnet_id      = yandex_vpc_subnet.subnet.id
-  vm_user        = local.vm_user
-  ssh_public_key = local.ssh_public_key
-  secondary_disk = {
-    for disk in yandex_compute_disk.disks :
-    disk.name => {
-      disk_id = disk.id
-      #"auto_delete" = true
-      #"mode"        = "READ_WRITE"
-    }
-    if disk.name == "web-${format("%02d", count.index + 1)}"
-  }
-  depends_on = [yandex_compute_disk.disks]
-}
-
-data "yandex_compute_instance" "iscsi-servers" {
-  count      = length(module.iscsi-servers)
-  name       = module.iscsi-servers[count.index].vm_name
-  folder_id  = yandex_resourcemanager_folder.folders["lab-folder"].id
-  depends_on = [module.iscsi-servers]
-}
-
-module "backend-servers" {
-  source         = "./modules/instances"
-  count          = local.backend_count
-  vm_name        = "backend-${format("%02d", count.index + 1)}"
-  vpc_name       = local.vpc_name
-  folder_id      = yandex_resourcemanager_folder.folders["lab-folder"].id
-  network_interface = {
-    for subnet in yandex_vpc_subnet.subnets :
-    subnet.name => {
-      subnet_id = subnet.id
-      #nat       = true
-    }
-    if subnet.name == "lab-subnet" #|| subnet.name == "backend-subnet"
-  }
-  #subnet_cidrs   = yandex_vpc_subnet.subnet.v4_cidr_blocks
-  #subnet_name    = yandex_vpc_subnet.subnet.name
-  #subnet_id      = yandex_vpc_subnet.subnet.id
-  vm_user        = local.vm_user
-  ssh_public_key = local.ssh_public_key
-  secondary_disk = {}
-  depends_on = [yandex_compute_disk.disks]
-}
-
-data "yandex_compute_instance" "backend-servers" {
-  count      = length(module.backend-servers)
-  name       = module.backend-servers[count.index].vm_name
-  folder_id  = yandex_resourcemanager_folder.folders["lab-folder"].id
-  depends_on = [module.backend-servers]
-}
-
-module "nginx-servers" {
-  source         = "./modules/instances"
-  count          = local.nginx_count
-  vm_name        = "nginx-${format("%02d", count.index + 1)}"
-  vpc_name       = local.vpc_name
-  folder_id      = yandex_resourcemanager_folder.folders["lab-folder"].id
-  network_interface = {
-    for subnet in yandex_vpc_subnet.subnets :
-    subnet.name => {
-      subnet_id = subnet.id
-      nat       = true
-    }
-    if subnet.name == "lab-subnet" #|| subnet.name == "nginx-subnet"
-  }
-  #subnet_cidrs   = yandex_vpc_subnet.subnet.v4_cidr_blocks
-  #subnet_name    = yandex_vpc_subnet.subnet.name
-  #subnet_id      = yandex_vpc_subnet.subnet.id
-  vm_user        = local.vm_user
-  ssh_public_key = local.ssh_public_key
-  secondary_disk = {}
-  depends_on     = [yandex_compute_disk.disks]
-}
-
-data "yandex_compute_instance" "nginx-servers" {
-  count      = length(module.nginx-servers)
-  name       = module.nginx-servers[count.index].vm_name
-  folder_id  = yandex_resourcemanager_folder.folders["lab-folder"].id
-  depends_on = [module.nginx-servers]
-}
-
-resource "local_file" "inventory_file" {
-  content = templatefile("${path.module}/templates/inventory.tpl",
-    {
-      jump-servers    = data.yandex_compute_instance.jump-servers
-      db-servers      = data.yandex_compute_instance.db-servers
-      iscsi-servers   = data.yandex_compute_instance.iscsi-servers
-      backend-servers = data.yandex_compute_instance.backend-servers
-      nginx-servers   = data.yandex_compute_instance.nginx-servers
-      consul-servers  = data.yandex_compute_instance.consul-servers
-      remote_user     = local.vm_user
-      domain_name     = var.domain_name
-      domain_org      = var.domain_org
-      domain_token    = var.yc_token
-    }
-  )
-  filename = "${path.module}/inventory.ini"
-}
-#resource "yandex_compute_disk" "disks" {
-#  for_each  = local.disks
-#  name      = each.key
-#  folder_id = yandex_resourcemanager_folder.folders["lab-folder"].id
-#  size      = each.value["size"]
-#  zone      = var.zone
-#}
-
-resource "yandex_compute_disk" "disks" {
-  count     = local.iscsi_count
-  name      = "web-${format("%02d", count.index + 1)}"
-  folder_id = yandex_resourcemanager_folder.folders["lab-folder"].id
-  size      = "1"
-  zone      = var.zone
-}
-*/
-#data "yandex_compute_disk" "disks" {
-#  for_each   = yandex_compute_disk.disks
-#  name       = each.value["name"]
-#  folder_id  = yandex_resourcemanager_folder.folders["lab-folder"].id
-#  depends_on = [yandex_compute_disk.disks]
-#}
 /*
 resource "null_resource" "nginx-servers" {
 
