@@ -33,7 +33,7 @@ resource "proxmox_vm_qemu" "dbs" {
   disk {
     storage = "local-lvm"
     type = "virtio"
-    size = "10G"
+    size = "20G"
   }
 
   os_type = "cloud-init"
@@ -65,7 +65,7 @@ resource "proxmox_vm_qemu" "bes" {
   disk {
     storage = "local-lvm"
     type = "virtio"
-    size = "10G"
+    size = "20G"
   }
 
   os_type = "cloud-init"
@@ -97,7 +97,7 @@ resource "proxmox_vm_qemu" "lbs" {
   disk {
     storage = "local-lvm"
     type = "virtio"
-    size = "10G"
+    size = "20G"
   }
 
   os_type = "cloud-init"
