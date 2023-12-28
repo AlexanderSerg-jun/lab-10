@@ -22,7 +22,7 @@ resource "proxmox_vm_qemu" "dbs" {
   cores = 2
   sockets = 1
   cpu = "host"
-  memory = 2048
+  memory = 1024
   onboot = true
 
   network {
@@ -54,7 +54,7 @@ resource "proxmox_vm_qemu" "bes" {
   cores = 2
   sockets = 1
   cpu = "host"
-  memory = 2048
+  memory = 1024
   onboot = true
 
   network {
@@ -86,7 +86,7 @@ resource "proxmox_vm_qemu" "lbs" {
   cores = 2
   sockets = 1
   cpu = "host"
-  memory = 2048
+  memory = 1024
   onboot = true
 
   network {
