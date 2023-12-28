@@ -121,13 +121,6 @@ resource "local_file" "inventory_file" {
       dbs    = proxmox_vm_qemu.dbs[*]
       bes    = proxmox_vm_qemu.bes[*]
       lbs    = proxmox_vm_qemu.lbs[*]
-
-      db_ip_address_list  = proxmox_lxc.db[*].network[0].ip
-      db_vm_names         = proxmox_lxc.db[*].hostname
-      app_ip_address_list = proxmox_lxc.app[*].network[0].ip
-      app_vm_names        = proxmox_lxc.app[*].hostname
-      lb_ip_address_list  = proxmox_lxc.lb[*].network[0].ip
-      lb_vm_names         = proxmox_lxc.lb[*].hostname
     }
   )
   filename = "${path.module}/inventory.ini"
