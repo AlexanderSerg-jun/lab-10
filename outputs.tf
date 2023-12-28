@@ -1,56 +1,28 @@
-/*
-output "jump-servers-info" {
+
+output "dbs-info" {
   description = "General information about created VMs"
   value = {
-    for vm in data.yandex_compute_instance.jump-servers :
+    for vm in proxmox_vm_qemu.dbs[*] :
     vm.name => {
-      ip_address     = vm.network_interface.*.ip_address
-      nat_ip_address = vm.network_interface.*.nat_ip_address
+      ip_address = vm.default_ipv4_address
     }
   }
 }
 
-output "db-servers-info" {
+output "bes-info" {
   description = "General information about created VMs"
   value = {
-    for vm in data.yandex_compute_instance.db-servers :
+    for vm in proxmox_vm_qemu.dbs[*] :
     vm.name => {
-      ip_address     = vm.network_interface.*.ip_address
-      nat_ip_address = vm.network_interface.*.nat_ip_address
+      ip_address = vm.default_ipv4_address
     }
   }
 }
 
-output "iscsi-servers-info" {
+output "lbs-info" {
   description = "General information about created VMs"
   value = {
-    for vm in data.yandex_compute_instance.iscsi-servers :
-    vm.name => {
-      ip_address     = vm.network_interface.*.ip_address
-      nat_ip_address = vm.network_interface.*.nat_ip_address
-    }
+    for vm in proxmox_vm_qemu.dbs[*] :
+    vm.name => vm
   }
 }
-
-output "backend-servers-info" {
-  description = "General information about created VMs"
-  value = {
-    for vm in data.yandex_compute_instance.backend-servers :
-    vm.name => {
-      ip_address     = vm.network_interface.*.ip_address
-      nat_ip_address = vm.network_interface.*.nat_ip_address
-    }
-  }
-}
-
-output "nginx-servers-info" {
-  description = "General information about created VMs"
-  value = {
-    for vm in data.yandex_compute_instance.nginx-servers :
-    vm.name => {
-      ip_address     = vm.network_interface.*.ip_address
-      nat_ip_address = vm.network_interface.*.nat_ip_address
-    }
-  }
-}
-*/
