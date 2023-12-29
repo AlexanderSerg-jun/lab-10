@@ -1,7 +1,7 @@
 ---
 - hosts: all
   become: true
-  serial: 1
+  serial: 5
   tasks:
     - name: Set hostname
       ansible.builtin.hostname:

@@ -119,86 +119,22 @@ sleep 60 && ansible-playbook ./provision.yml
 ```
 Outputs:
 
-backend-servers-info = {
-  "backend-01" = {
-    "ip_address" = tolist([
-      "10.10.10.8",
-    ])
-    "nat_ip_address" = tolist([
-      "",
-    ])
+bes-info = {
+  "be-01" = {
+    "ip_address" = "192.168.117.51"
   }
-  "backend-02" = {
-    "ip_address" = tolist([
-      "10.10.10.16",
-    ])
-    "nat_ip_address" = tolist([
-      "",
-    ])
+  "be-02" = {
+    "ip_address" = "192.168.117.52"
   }
 }
-consul-servers-info = {
-  "consul-01" = {
-    "ip_address" = tolist([
-      "10.10.10.17",
-    ])
-    "nat_ip_address" = tolist([
-      "",
-    ])
-  }
-  "consul-02" = {
-    "ip_address" = tolist([
-      "10.10.10.25",
-    ])
-    "nat_ip_address" = tolist([
-      "",
-    ])
-  }
-  "consul-03" = {
-    "ip_address" = tolist([
-      "10.10.10.4",
-    ])
-    "nat_ip_address" = tolist([
-      "",
-    ])
-  }
-}
-db-servers-info = {
+dbs-info = {
   "db-01" = {
-    "ip_address" = tolist([
-      "10.10.10.20",
-    ])
-    "nat_ip_address" = tolist([
-      "",
-    ])
+    "ip_address" = "192.168.117.41"
   }
 }
-iscsi-servers-info = {
-  "iscsi-01" = {
-    "ip_address" = tolist([
-      "10.10.10.24",
-    ])
-    "nat_ip_address" = tolist([
-      "",
-    ])
-  }
-}
-nginx-servers-info = {
-  "nginx-01" = {
-    "ip_address" = tolist([
-      "10.10.10.3",
-    ])
-    "nat_ip_address" = tolist([
-      "158.160.23.202",
-    ])
-  }
-  "nginx-02" = {
-    "ip_address" = tolist([
-      "10.10.10.12",
-    ])
-    "nat_ip_address" = tolist([
-      "158.160.1.253",
-    ])
+lbs-info = {
+  "lb-01" = {
+    "ip_address" = "192.168.117.61"
   }
 }
 ```
