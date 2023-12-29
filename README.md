@@ -109,7 +109,7 @@ pveum aclmod / -user user@pve-01 -role TerraformProv
 
 Скачаем образ:
 ```
-root@pve:~# wget http://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2
+wget http://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2
 ```
 
 Создадим шаблон 'debian-12-generic-amd64', с которого в дальнейшем будем создавать (клонировать) виртуальные машины:
