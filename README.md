@@ -269,11 +269,13 @@ qm create 9000 --name "debian-12-generic-amd64" --memory 1024 --cores 2 --net0 v
 qm importdisk 9000 debian-12-generic-amd64.qcow2 local-lvm && \
 qm set 9000 --scsihw virtio-scsi-pci --scsi0 local-lvm:vm-9000-disk-0 && \
 qm set 9000 --boot c --bootdisk scsi0 && \
+qm resize 9000 scsi0 +10G && \
 qm set 9000 --ide2 local-lvm:cloudinit && \
 qm set 9000 --serial0 socket --vga serial0 && \
 qm set 9000 --agent enabled=1 && \
 qm template 9000
 ```
+
 
 
 

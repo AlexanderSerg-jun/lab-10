@@ -18,7 +18,6 @@ resource "proxmox_vm_qemu" "dbs" {
   #vmid = "40${count.index + 1}"
   target_node = local.proxmox_host
   clone = local.template_name
-  size  = "10G"
   agent = 1
   cores = 2
   sockets = 1
@@ -51,7 +50,6 @@ resource "proxmox_vm_qemu" "bes" {
   #vmid = "40${count.index + 1}"
   target_node = local.proxmox_host
   clone = local.template_name
-  size  = "10G"
   agent = 1
   cores = 2
   sockets = 1
@@ -84,7 +82,6 @@ resource "proxmox_vm_qemu" "lbs" {
   #vmid = "40${count.index + 1}"
   target_node = local.proxmox_host
   clone = local.template_name
-  size  = "10G"
   agent = 1
   cores = 2
   sockets = 1
