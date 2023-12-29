@@ -18,7 +18,7 @@
       dest: "/etc/nginx/sites-available/{{ item }}"
     loop:
       #- conf.d/upstreams.conf
-      - wp.conf
+      - nginx.conf
 
   # ln -s /etc/nginx/sites-{available/upstreams,enabled/default}
   - name: Nginx | Create a symbolic default link to /etc/nginx/sites-available/upstreams
