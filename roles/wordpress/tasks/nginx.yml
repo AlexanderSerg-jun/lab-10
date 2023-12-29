@@ -23,7 +23,7 @@
   # ln -s /etc/nginx/sites-{available/upstreams,enabled/default}
   - name: Nginx | Create a symbolic default link to /etc/nginx/sites-available/upstreams
     ansible.builtin.file:
-      src: /etc/nginx/sites-available/nginx.conf
+      src: /etc/nginx/sites-available/wp.conf
       dest: /etc/nginx/sites-enabled/default
       state: link
   
