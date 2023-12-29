@@ -21,12 +21,12 @@
       #- conf.d/upstreams.conf
       - sites-available/upstreams
 
-  # cp /etc/nginx/sites-available/{default,upstreams}
-  - name: Copy file /etc/nginx/sites-available/default to upstreams
-    ansible.builtin.copy:
-      src: /etc/nginx/sites-available/default
-      dest: /etc/nginx/sites-available/upstreams
-      remote_src: true
+  ## cp /etc/nginx/sites-available/{default,upstreams}
+  #- name: Copy file /etc/nginx/sites-available/default to upstreams
+  #  ansible.builtin.copy:
+  #    src: /etc/nginx/sites-available/default
+  #    dest: /etc/nginx/sites-available/upstreams
+  #    remote_src: true
 
   ## echo "                proxy_pass http://backend;" | sed -i 'a\location / {'
   #- name: Insert line proxy_pass to /etc/nginx/sites-available/upstreams
