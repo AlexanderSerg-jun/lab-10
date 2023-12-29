@@ -18,6 +18,7 @@ resource "proxmox_vm_qemu" "dbs" {
   #vmid = "40${count.index + 1}"
   target_node = local.proxmox_host
   clone = local.template_name
+  size  = "10G"
   agent = 1
   cores = 2
   sockets = 1
@@ -33,7 +34,7 @@ resource "proxmox_vm_qemu" "dbs" {
   disk {
     storage = "local-lvm"
     type = "virtio"
-    size = "20G"
+    size = "5G"
   }
 
   os_type = "cloud-init"
@@ -50,6 +51,7 @@ resource "proxmox_vm_qemu" "bes" {
   #vmid = "40${count.index + 1}"
   target_node = local.proxmox_host
   clone = local.template_name
+  size  = "10G"
   agent = 1
   cores = 2
   sockets = 1
@@ -65,7 +67,7 @@ resource "proxmox_vm_qemu" "bes" {
   disk {
     storage = "local-lvm"
     type = "virtio"
-    size = "20G"
+    size = "5G"
   }
 
   os_type = "cloud-init"
@@ -82,6 +84,7 @@ resource "proxmox_vm_qemu" "lbs" {
   #vmid = "40${count.index + 1}"
   target_node = local.proxmox_host
   clone = local.template_name
+  size  = "10G"
   agent = 1
   cores = 2
   sockets = 1
@@ -97,7 +100,7 @@ resource "proxmox_vm_qemu" "lbs" {
   disk {
     storage = "local-lvm"
     type = "virtio"
-    size = "20G"
+    size = "5G"
   }
 
   os_type = "cloud-init"

@@ -255,53 +255,24 @@ qm create 9000 --name "ubuntu-2004-cloudinit-template" --memory 2048 --cores 2 -
 
 ```
 
-Смотрим доступные образы:
-```
-root@pve-01:~# pveam available --section system
-system          almalinux-9-default_20221108_amd64.tar.xz
-system          alpine-3.18-default_20230607_amd64.tar.xz
-system          archlinux-base_20230608-1_amd64.tar.zst
-system          centos-9-stream-default_20221109_amd64.tar.xz
-system          debian-11-standard_11.7-1_amd64.tar.zst
-system          debian-12-standard_12.2-1_amd64.tar.zst
-system          devuan-4.0-standard_4.0_amd64.tar.gz
-system          fedora-38-default_20230607_amd64.tar.xz
-system          fedora-39-default_20231118_amd64.tar.xz
-system          gentoo-current-openrc_20231009_amd64.tar.xz
-system          opensuse-15.4-default_20221109_amd64.tar.xz
-system          opensuse-15.5-default_20231118_amd64.tar.xz
-system          rockylinux-9-default_20221109_amd64.tar.xz
-system          ubuntu-20.04-standard_20.04-1_amd64.tar.gz
-system          ubuntu-22.04-standard_22.04-1_amd64.tar.zst
-system          ubuntu-23.04-standard_23.04-1_amd64.tar.zst
-system          ubuntu-23.10-standard_23.10-1_amd64.tar.zst
-root@pve-01:~# 
-```
 
-Скачиваем нужный образ в хранилище local:
+Скачаем образ:
 ```
-pveam download local almalinux-9-default_20221108_amd64.tar.xz
-```
-
-Скачаем iso-образ в директорий /var/lib/vz/template/iso/:
-```
-root@pve:~# wget https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-12.4.0-amd64-netinst.iso -P /var/lib/vz/template/iso/
-
 root@pve:~# wget http://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2
 ```
 
+Создадим шаблон, с которого в дальнейшем будем создавать виртуальные машины:
 ```
-apt update -y && apt install libguestfs-tools -y
-virt-customize -a debian-12-generic-amd64.qcow2 --install qemu-guest-agent
-
-qm create 9999 --name "debian-12-generic-amd64" --memory 1024 --cores 2 --net0 virtio,bridge=vmbr0 && \
-qm importdisk 9999 debian-12-generic-amd64.qcow2 local-lvm && \
-qm set 9999 --scsihw virtio-scsi-pci --scsi0 local-lvm:vm-9999-disk-0 && \
-qm set 9999 --boot c --bootdisk scsi0 && \
-qm set 9999 --ide2 local-lvm:cloudinit && \
-qm set 9999 --serial0 socket --vga serial0 && \
-qm set 9999 --agent enabled=1 && \
-qm template 9999
+apt update -y && apt install libguestfs-tools -y && \
+virt-customize -a debian-12-generic-amd64.qcow2 --install qemu-guest-agent && \
+qm create 9000 --name "debian-12-generic-amd64" --memory 1024 --cores 2 --net0 virtio,bridge=vmbr0 && \
+qm importdisk 9000 debian-12-generic-amd64.qcow2 local-lvm && \
+qm set 9000 --scsihw virtio-scsi-pci --scsi0 local-lvm:vm-9000-disk-0 && \
+qm set 9000 --boot c --bootdisk scsi0 && \
+qm set 9000 --ide2 local-lvm:cloudinit && \
+qm set 9000 --serial0 socket --vga serial0 && \
+qm set 9000 --agent enabled=1 && \
+qm template 9000
 ```
 
 
