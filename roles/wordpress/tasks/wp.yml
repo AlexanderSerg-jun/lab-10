@@ -1,18 +1,13 @@
 ---
-- name: Wordpress | Configure PHP 
-  ansible.builtin.lineinfile:
-    path: "/etc/php.ini"
-    insertafter: ";cgi.fix_pathinfo.*"
-    line: "cgi.fix_pathinfo=0"
-  notify: restart php-fpm redhat
+- name: Debian OS
+  block:
 
-- name: Wordpress | Configure nginx for wordpress
-  ansible.builtin.template:
-    src: wp.conf.j2
-    dest: /etc/nginx/conf.d/wp.conf
-    owner: nginx
-    group: nginx
-  notify: reload nginx
+  - name: Wordpress | Configure PHP 
+    ansible.builtin.lineinfile:
+      path: "/etc/php/{{ php_version }}/fpm/php.ini"
+      insertafter: ";cgi.fix_pathinfo.*"
+      line: "cgi.fix_pathinfo=0"
+    notify: restart php-fpm debian
 
 #- name: Wordpress | Remove default config
 #  ansible.builtin.file:
@@ -27,27 +22,73 @@
 #    mode: "0644"
 #  notify: reload nginx
 
-- name: Wordpress | Download wordpress package
-  ansible.builtin.get_url:
-    url: https://wordpress.org/latest.tar.gz
-    dest: /tmp/wordpress.tar.gz
-  register: download
-  #when: inventory_hostname in 'be-01'
+  - name: Wordpress | Download wordpress package
+    ansible.builtin.get_url:
+      url: https://wordpress.org/latest.tar.gz
+      dest: /tmp/wordpress.tar.gz
+    register: download
+    #when: inventory_hostname in 'be-01'
 
-- name: Wordpress | Unarchive wordpress package
-  ansible.builtin.unarchive:
-    src: /tmp/wordpress.tar.gz
-    dest: /var/www/
-    remote_src: yes
-    owner: nginx
-    group: nginx
-  when: download.changed
+  - name: Wordpress | Unarchive wordpress package
+    ansible.builtin.unarchive:
+      src: /tmp/wordpress.tar.gz
+      dest: /var/www/
+      remote_src: yes
+      owner: www-data
+      group: www-data
+    when: download.changed
     
-- name: Wordpress | Configure wordpress
-  ansible.builtin.template:
-    src: wp-config.php.j2
-    dest: /var/www/wordpress/wp-config.php
-    owner: nginx
-    group: nginx
-  when: download.changed
+  - name: Wordpress | Configure wordpress
+    ansible.builtin.template:
+      src: wp-config.php.j2
+      dest: /var/www/wordpress/wp-config.php
+      owner: www-data
+      group: www-data
+    when: download.changed
+  
+  when: ansible_os_family == "Debian"
+
+- name: Redhat OS
+  block:
+
+  - name: Wordpress | Configure PHP 
+    ansible.builtin.lineinfile:
+      path: "/etc/php.ini"
+      insertafter: ";cgi.fix_pathinfo.*"
+      line: "cgi.fix_pathinfo=0"
+    notify: restart php-fpm redhat
+
+  - name: Wordpress | Configure nginx for wordpress
+    ansible.builtin.template:
+      src: wp.conf.j2
+      dest: /etc/nginx/conf.d/wp.conf
+      owner: nginx
+      group: nginx
+    notify: reload nginx
+
+  - name: Wordpress | Download wordpress package
+    ansible.builtin.get_url:
+      url: https://wordpress.org/latest.tar.gz
+      dest: /tmp/wordpress.tar.gz
+    register: download
+    #when: inventory_hostname in 'be-01'
+
+  - name: Wordpress | Unarchive wordpress package
+    ansible.builtin.unarchive:
+      src: /tmp/wordpress.tar.gz
+      dest: /var/www/
+      remote_src: yes
+      owner: nginx
+      group: nginx
+    when: download.changed
+    
+  - name: Wordpress | Configure wordpress
+    ansible.builtin.template:
+      src: wp-config.php.j2
+      dest: /var/www/wordpress/wp-config.php
+      owner: nginx
+      group: nginx
+    when: download.changed
+  
+  when: ansible_os_family == "RedHat"
   
