@@ -17,5 +17,5 @@ db_dump_file: "cars.sql"
 
 wp_db_name: "wordpress"
 wp_db_user: "wordpress"
-wp_db_pass: "wordpresspassword"
+wp_db_pass: "wordpress@Otus1234"
 wp_db_host: "{{ hostvars['db-01'].ansible_host }}"

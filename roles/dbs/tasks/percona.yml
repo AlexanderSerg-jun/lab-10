@@ -301,7 +301,7 @@
 - name: DB | Create database user using hashed password with all database privileges
   community.mysql.mysql_user:
     name: "{{ wp_db_user }}"
-    host: "10.10.0.0/255.255.0.0"
+    host: "192.168.0.0/255.255.0.0"
     password: "{{ wp_db_pass }}"
     priv: "{{ wp_db_name }}.*:ALL"
     state: present
