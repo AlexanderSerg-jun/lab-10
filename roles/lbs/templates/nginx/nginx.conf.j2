@@ -36,10 +36,9 @@ http {
     include /etc/nginx/conf.d/*.conf;
 
 
-    upstream @consul {
-        ip_hash;
-{% for item in groups.consul_servers %}
-        server {{ hostvars[item].ansible_host }}:8500 max_fails=1;
+    upstream @backend {
+{% for item in groups.bes %}
+        server {{ hostvars[item].ansible_host }}:80 max_fails=1;
 {% endfor %}
     }
 
@@ -60,20 +59,6 @@ http {
                 proxy_connect_timeout 5;
         }
 
-        location ~* /(ui|v1) {
-                proxy_pass http://@consul;
-                proxy_set_header X-Real-IP $remote_addr;
-                proxy_set_header X-Forwarded-For $remote_addr;
-                proxy_set_header Host $host;
-                proxy_connect_timeout 5;
-                proxy_buffering off;
-        }
-
-        location = /status {
-                stub_status;
-                access_log off;
-        }
-
         #error_page 404 /404.html;
         #    location = /40x.html {
         #}
@@ -81,12 +66,5 @@ http {
         #error_page 500 502 503 504 /50x.html;
         #    location = /50x.html {
         #}
-    }
-
-    server {
-        listen 127.0.0.1:8080;
-        server_name _;
-
-        return 502;
     }
 }

@@ -17,9 +17,9 @@
       src: "nginx/{{ item }}.j2"
       dest: "/etc/nginx/{{ item }}"
     loop:
-      - nginx.conf
-      - conf.d/upstreams.conf
-      #- sites-available/upstreams
+      #- nginx.conf
+      #- conf.d/upstreams.conf
+      - sites-available/upstreams
 
   # cp /etc/nginx/sites-available/{default,upstreams}
   - name: Copy file /etc/nginx/sites-available/default to upstreams
@@ -28,19 +28,19 @@
       dest: /etc/nginx/sites-available/upstreams
       remote_src: true
 
-  # echo "                proxy_pass http://backend;" | sed -i 'a\location / {'
-  - name: Insert line proxy_pass to /etc/nginx/sites-available/upstreams
-    ansible.builtin.lineinfile:
-      path: /etc/nginx/sites-available/upstreams
-      #regexp: '^Listen '
-      insertafter: '^\tlocation / {\n'
-      line: '                proxy_pass http://backend;'
+  ## echo "                proxy_pass http://backend;" | sed -i 'a\location / {'
+  #- name: Insert line proxy_pass to /etc/nginx/sites-available/upstreams
+  #  ansible.builtin.lineinfile:
+  #    path: /etc/nginx/sites-available/upstreams
+  #    #regexp: '^Listen '
+  #    insertafter: '^\tlocation / {\n'
+  #    line: '                proxy_pass http://backend;'
 
-  - name: Comment out the line /etc/nginx/sites-available/upstreams
-    ansible.builtin.replace:
-      path: /etc/nginx/sites-available/upstreams
-      regexp: '^\t\t(.*try_files \$uri \$uri/ =404;.*)'
-      replace: '\t\t#\1'
+  #- name: Comment out the line /etc/nginx/sites-available/upstreams
+  #  ansible.builtin.replace:
+  #    path: /etc/nginx/sites-available/upstreams
+  #    regexp: '^\t\t(.*try_files \$uri \$uri/ =404;.*)'
+  #    replace: '\t\t#\1'
 
   # ln -s /etc/nginx/sites-{available/upstreams,enabled/default}
   - name: Create a symbolic default link to /etc/nginx/sites-available/upstreams
