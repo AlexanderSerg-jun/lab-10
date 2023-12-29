@@ -7,7 +7,7 @@ locals {
   template_name = "debian-12-generic-amd64"
 
   dbs_count = "1"
-  bes_count = "1"
+  bes_count = "2"
   lbs_count = "1"
 }
 
